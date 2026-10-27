@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b120d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="قضية يلوستون">
+<meta name="description" content="لعبة تحقيق بيئية للفرق: اختاروا عامل المكافحة الحيوية المناسب في يلوستون.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="config.js"></script>
+<title>قضية حديقة يلوستون الوطنية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+
+/* Layout: a field case file played as a game — one scene at a time, sticky HUD, evidence-tag cards, a searchable valley map */
+:root{
+  --paper:#f7f6f0; --card:#ece4d6; --card2:#e2ead6; --ink:#1f2a1a; --muted:#5d6656;
+  --olive:#4f6b2e; --olive-ink:#ffffff; --tape:#e2b93b; --tape-ink:#2a2100;
+  --good:#2f7a3d; --warn:#b07a12; --bad:#a63a2a; --line:#d5cfc2;
+  --sky:#cfe0e3; --hill1:#8fa86a; --hill2:#6d8a4a; --hill3:#4f6b2e; --water:#5f97ad; --willow:#3f6a2a; --soil:#9c8460; --snow:#ffffff;
+  --f-display:"Amiri","Noto Naskh Arabic","Times New Roman",serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#13180f; --card:#232a1d; --card2:#1e2a1b; --ink:#e8eadf; --muted:#a7ae9c; --olive:#9dbb6a; --olive-ink:#13180f;
+  --tape:#d9b03a; --tape-ink:#1b1500; --good:#6fc07e; --warn:#e0a83a; --bad:#e2786a; --line:#343d2c;
+  --sky:#1d2b30; --hill1:#3b4d2c; --hill2:#2f4024; --hill3:#24331b; --water:#3f6f82; --willow:#5f8f43; --soil:#8a7352; --snow:#c9d3c4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#13180f; --card:#232a1d; --card2:#1e2a1b; --ink:#e8eadf; --muted:#a7ae9c; --olive:#9dbb6a; --olive-ink:#13180f;
+  --tape:#d9b03a; --tape-ink:#1b1500; --good:#6fc07e; --warn:#e0a83a; --bad:#e2786a; --line:#343d2c;
+  --sky:#1d2b30; --hill1:#3b4d2c; --hill2:#2f4024; --hill3:#24331b; --water:#3f6f82; --willow:#5f8f43; --soil:#8a7352; --snow:#c9d3c4; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75;direction:rtl}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(2rem,6vw,3rem);color:var(--olive)}
+h2{font-size:clamp(1.6rem,4.5vw,2.1rem);color:var(--olive)}
+h3{font-size:1.25rem}
+p{margin:0}
+a{color:var(--olive);font-weight:500}
+.mono{font-family:var(--f-mono);font-size:.8rem;letter-spacing:.06em}
+.muted{color:var(--muted)}
+
+/* HUD */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.top .wrap{padding-block:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.team{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.score{background:var(--olive);color:var(--olive-ink);border-radius:999px;padding:2px 14px;font-family:var(--f-mono);font-variant-numeric:tabular-nums;transition:transform .2s}
+.score.pop{transform:scale(1.25)}
+.pill{border:1.5px solid var(--line);border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:700;background:var(--paper);color:var(--ink)}
+.pill.streak{border-color:var(--tape);background:var(--tape);color:var(--tape-ink)}
+button.pill{cursor:pointer;font-family:var(--f-body)}
+.steps{display:flex;gap:5px;width:100%;overflow-x:auto}
+.steps button{flex:1;min-width:58px;border:0;background:var(--card);color:var(--muted);font:500 .7rem var(--f-body);padding:6px 4px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.steps button.on{background:var(--olive);color:var(--olive-ink)}
+.steps button.done{background:var(--card2);color:var(--ink)}
+.steps button:disabled{opacity:.45;cursor:default}
+
+section.scene{display:grid;gap:18px;padding-top:24px}
+.tape{display:inline-block;background:var(--tape);color:var(--tape-ink);font-family:var(--f-mono);font-size:.75rem;letter-spacing:.12em;padding:3px 12px;transform:rotate(-1.5deg);justify-self:start}
+.card{background:var(--card);border-radius:14px;padding:18px}
+.lead{font-size:1.06rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.btn{appearance:none;border:0;background:var(--olive);color:var(--olive-ink);font:700 1rem var(--f-body);padding:12px 22px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--olive);border:1.5px solid var(--olive)}
+.btn.big{font-size:1.15rem;padding:14px 30px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible,[role=button]:focus-visible{outline:3px solid var(--tape);outline-offset:2px}
+.nav{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
+input[type=text]{width:100%;font:500 1.05rem var(--f-body);padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)}
+
+.hero svg{width:100%;height:auto;display:block;border-radius:16px}
+.hero .note{font-size:.85rem;color:var(--muted);margin-top:8px}
+.rounds{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;list-style:none}
+.rounds li{background:var(--card);border-radius:8px;padding:4px 12px;font-size:.88rem}
+.rounds li b{font-family:var(--f-mono);color:var(--olive);margin-inline-end:6px}
+
+details{background:var(--card);border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;font-weight:700}
+details p{margin-top:8px}
+.criteria{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:0;margin:0;list-style:none}
+.criteria li{background:var(--card);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.criteria b{display:block;color:var(--olive)}
+
+.profile{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:start}
+.profile dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.93rem}
+.profile dt{color:var(--muted)} .profile dd{margin:0;min-width:0}
+@media (max-width:520px){.profile{grid-template-columns:1fr}.profile .trackbox{width:90px}}
+.trackbox{background:var(--paper);border:1.5px dashed var(--line);border-radius:12px;padding:8px;text-align:center}
+.trackbox svg{width:100%;height:auto;color:var(--ink)}
+.trackbox small{display:block;font-size:.7rem;color:var(--muted)}
+
+/* true/false */
+.tf{display:grid;gap:10px}
+.tfrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px}
+.tfrow p{min-width:0}
+.tfbtns{display:flex;gap:6px}
+.tfbtns button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:700 .9rem var(--f-body);padding:6px 14px;border-radius:8px;cursor:pointer}
+.tfrow.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--paper))}
+.tfrow.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--paper))}
+.tfrow .why{grid-column:1/-1;font-size:.88rem;color:var(--muted)}
+
+/* quiz */
+.q{display:grid;gap:10px}
+.opts{display:grid;gap:8px}
+.opt{text-align:right;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:500 .97rem var(--f-body);padding:10px 14px;border-radius:10px;cursor:pointer;line-height:1.6}
+.opt:hover:not(:disabled){border-color:var(--olive)}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--paper))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--paper))}
+.opt.struck{text-decoration:line-through;opacity:.45}
+.opt:disabled{cursor:default}
+.fb{border-inline-start:4px solid var(--olive);padding:6px 12px;font-size:.95rem;background:var(--paper);border-radius:6px}
+.lifeline{justify-self:start;border:1.5px dashed var(--olive);background:transparent;color:var(--olive);font:700 .85rem var(--f-body);padding:5px 12px;border-radius:999px;cursor:pointer}
+.lifeline:disabled{opacity:.4;cursor:default}
+.ev-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ev-num{font-family:var(--f-mono);background:var(--ink);color:var(--paper);padding:1px 8px;border-radius:4px;font-size:.75rem}
+.obs{display:grid;gap:6px;font-size:.95rem}
+.obs b{color:var(--olive)}
+
+/* clue hunt */
+.hunt{position:relative;border-radius:16px;overflow:hidden;border:2px solid var(--ink);max-width:100%}
+.hunt svg{display:block;width:100%;height:auto;cursor:zoom-in;touch-action:manipulation}
+.hunt .spot circle.hit{fill:transparent}
+.hunt .spot .ring{fill:none;stroke:var(--tape);stroke-width:5;opacity:0}
+.hunt .spot.found .ring{opacity:1}
+.hunt .spot.hinted .ring{opacity:1;stroke-dasharray:10 8}
+@media (prefers-reduced-motion:no-preference){.hunt .spot.hinted .ring{animation:spin 3s linear infinite;transform-box:fill-box;transform-origin:center}@keyframes spin{to{transform:rotate(360deg)}}}
+.hunt .pin{display:none}
+.hunt .spot.found .pin{display:inline}
+.huntbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.huntbar .found{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:1.1rem}
+.toast{min-height:1.75em;font-weight:500}
+
+/* tracks */
+.tracks{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.trk{background:var(--card);border-radius:14px;padding:12px;display:grid;gap:8px;justify-items:center;text-align:center}
+.trk .snowbox{background:var(--snow);border-radius:10px;width:100%;display:grid;place-items:center;padding:8px}
+.trk .snowbox svg{width:76px;height:76px;color:#3a3a3a}
+.trk .names{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
+.trk .names button{border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:500 .82rem var(--f-body);padding:5px 4px;border-radius:8px;cursor:pointer}
+.trk .names button.right{border-color:var(--good);background:var(--good);color:var(--paper)}
+.trk .names button.wrong{border-color:var(--bad);background:var(--bad);color:var(--paper)}
+.trk .names button:disabled{cursor:default}
+.trk p{font-size:.82rem;text-align:right}
+
+/* suspects */
+.suspects{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.sus{position:relative;background:var(--card);border:2px solid transparent;border-radius:14px;padding:14px 12px 12px;cursor:pointer;text-align:center;color:var(--ink);font:inherit;display:grid;gap:6px;justify-items:center}
+.sus:hover{border-color:var(--olive)}
+.sus svg{width:64px;height:64px;color:var(--ink)}
+.sus .nm{font-family:var(--f-display);font-size:1.15rem;font-weight:700;line-height:1.2}
+.sus .tag{font-size:.72rem;color:var(--muted)}
+.sus .num{position:absolute;top:8px;inset-inline-start:10px;font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
+.chip{font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 10px;border:1.5px solid currentColor}
+.chip.fit{color:var(--good)} .chip.maybe{color:var(--warn)} .chip.out{color:var(--bad)} .chip.none{color:var(--muted);border-style:dashed}
+
+dialog{border:0;border-radius:16px;padding:0;max-width:min(640px,calc(100vw - 24px));width:100%;background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(10,15,8,.6)}
+.dlg{padding:20px;display:grid;gap:14px;max-height:85vh;overflow:auto}
+.dlg-head{display:flex;gap:14px;align-items:center}
+.dlg-head svg{width:56px;height:56px;flex:none;color:var(--ink)}
+.dlg-head .sci{font-style:italic;font-size:.85rem;color:var(--muted);direction:ltr;text-align:right}
+.quote{font-family:var(--f-display);font-size:1.25rem;line-height:1.6;background:var(--card2);border-radius:12px;padding:12px 16px;position:relative}
+.quote small{display:block;font-family:var(--f-body);font-size:.75rem;color:var(--muted)}
+.facts{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.facts li{background:var(--card);border-radius:10px;padding:8px 12px;font-size:.93rem}
+.facts li b{color:var(--olive)}
+.verdict{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.verdict button{border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:700 .95rem var(--f-body);padding:10px 6px;border-radius:10px;cursor:pointer}
+.verdict button[aria-pressed=true].fit{background:var(--good);border-color:var(--good);color:var(--paper)}
+.verdict button[aria-pressed=true].maybe{background:var(--warn);border-color:var(--warn);color:var(--paper)}
+.verdict button[aria-pressed=true].out{background:var(--bad);border-color:var(--bad);color:var(--paper)}
+.x{margin-inline-start:auto;border:0;background:var(--card);color:var(--ink);width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;flex:none}
+
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pick button{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px;font:700 1rem var(--f-display);cursor:pointer;display:grid;justify-items:center;gap:4px}
+.pick button svg{width:44px;height:44px;color:var(--ink)}
+.pick button[aria-pressed=true]{border-color:var(--olive);background:var(--card2);box-shadow:0 0 0 3px color-mix(in srgb,var(--olive) 35%,transparent)}
+
+/* reveal */
+.stamp{justify-self:center;font-family:var(--f-display);font-size:1.7rem;font-weight:700;color:var(--bad);border:3px solid var(--bad);padding:4px 22px;border-radius:8px;transform:rotate(-4deg)}
+.stamp.win{color:var(--good);border-color:var(--good)}
+@media (prefers-reduced-motion:no-preference){.stamp{animation:slam .5s cubic-bezier(.2,1.6,.4,1) both}@keyframes slam{from{transform:rotate(-4deg) scale(3);opacity:0}to{transform:rotate(-4deg) scale(1);opacity:1}}}
+.rank{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
+.rank svg{width:72px;height:72px;flex:none}
+.rank .t{font-family:var(--f-display);font-size:1.5rem;font-weight:700;color:var(--olive)}
+.timeline{list-style:none;margin:0;padding:0;display:grid;border-inline-start:3px solid var(--olive);margin-inline-start:8px}
+.timeline li{position:relative;padding-block:4px 14px;padding-inline-start:18px}
+.timeline li::before{content:"";position:absolute;inset-inline-start:-9px;top:10px;width:15px;height:15px;border-radius:50%;background:var(--paper);border:3px solid var(--olive)}
+.timeline .yr{font-family:var(--f-mono);font-weight:500;color:var(--olive);font-variant-numeric:tabular-nums}
+.ba{position:relative;border-radius:14px;overflow:hidden;max-width:100%}
+.ba svg{display:block;width:100%;height:auto}
+.ba .after{position:absolute;inset:0;clip-path:inset(0 calc(100% - var(--pos,50%)) 0 0)}
+.ba .divider{position:absolute;top:0;bottom:0;left:var(--pos,50%);width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 4px rgba(0,0,0,.5)}
+.ba .lbl{position:absolute;top:8px;background:var(--ink);color:var(--paper);font-size:.75rem;padding:1px 10px;border-radius:4px}
+.ba .lbl.l{left:8px} .ba .lbl.r{right:8px}
+input[type=range]{width:100%;accent-color:var(--olive)}
+.scorebig{font-family:var(--f-mono);font-size:3.2rem;color:var(--olive);text-align:center;font-variant-numeric:tabular-nums;line-height:1}
+.breakdown{display:grid;grid-template-columns:1fr auto;gap:4px 16px;font-size:.95rem}
+.breakdown span:nth-child(even){font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.sources{display:grid;gap:6px;padding:0;margin:0;list-style:none;font-size:.92rem}
+.guide ol{margin:6px 0 0;padding-inline-start:20px}
+
+/* effects */
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+#count{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 88%,transparent);color:var(--paper);text-align:center}
+#count .n{font-family:var(--f-mono);font-size:clamp(6rem,30vw,12rem);line-height:1}
+#count .l{font-family:var(--f-display);font-size:1.5rem}
+@media (prefers-reduced-motion:no-preference){
+ section.scene{animation:in .35s ease}@keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+ .shake{animation:shake .4s}@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+ #count .n{animation:beat .7s ease}@keyframes beat{from{transform:scale(1.6);opacity:0}to{transform:scale(1);opacity:1}}
+}
+
+/* v3 additions: real photos and video */
+.photo{position:relative;border-radius:16px;overflow:hidden;margin:0;max-width:100%}
+.photo img{display:block;width:100%;height:auto;aspect-ratio:848/416;object-fit:cover}
+.photo figcaption,.media figcaption{font-size:.8rem;color:var(--muted);padding-top:6px}
+.hero-photo{position:relative;border-radius:18px;overflow:hidden}
+.hero-photo img{display:block;width:100%;height:auto;aspect-ratio:16/8;object-fit:cover}
+.hero-photo .ov{position:absolute;inset:auto 0 0 0;padding:40px 16px 14px;background:linear-gradient(transparent,rgba(12,16,9,.85));color:#fff}
+.hero-photo .ov h1{color:#fff}
+.hero-photo .ov p{color:#e8eadf;font-size:.85rem}
+.media{margin:0;max-width:100%}
+.media video{display:block;width:100%;height:auto;border-radius:14px;background:var(--ink)}
+.tagline{display:inline-block;font-size:.72rem;font-weight:700;background:var(--ink);color:var(--paper);border-radius:4px;padding:0 8px;margin-inline-end:6px}
+.chapter{display:grid;gap:12px}
+.chapter .num{font-family:var(--f-mono);color:var(--olive);font-size:.8rem;letter-spacing:.1em}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start}
+.split>*{min-width:0}
+.facttable{width:100%;border-collapse:collapse;font-size:.93rem}
+.facttable th,.facttable td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+.facttable th{color:var(--olive);font-weight:700;width:34%;white-space:nowrap}
+.tablewrap{overflow-x:auto;background:var(--card);border-radius:14px;padding:6px 8px}
+.list{margin:0;padding-inline-start:20px;display:grid;gap:6px}
+.sw h4{margin:0 0 6px;font-family:var(--f-display);font-size:1.15rem}
+.sw.plus h4{color:var(--good)} .sw.minus h4{color:var(--bad)}
+.ptype{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start;background:var(--card);border-radius:12px;padding:12px}
+.ptype svg{width:64px;height:64px;color:var(--olive)}
+.match{display:grid;gap:10px}
+.mrow{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px}
+.mrow svg{width:44px;height:44px;color:var(--ink)}
+.mrow .mopts{display:flex;flex-wrap:wrap;gap:6px}
+.mrow .mopts button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:500 .85rem var(--f-body);padding:5px 10px;border-radius:8px;cursor:pointer}
+.mrow.right{border-color:var(--good)} .mrow.wrong{border-color:var(--bad)}
+.mrow .mopts button.right{background:var(--good);border-color:var(--good);color:var(--paper)}
+.mrow .mopts button.wrong{background:var(--bad);border-color:var(--bad);color:var(--paper)}
+.mrow .mopts button:disabled{cursor:default}
+.note{background:var(--card2);border-radius:12px;padding:12px 16px;font-size:.92rem}
+.paths{display:grid;gap:10px}
+.paths details summary{display:flex;gap:10px;align-items:center}
+.paths details summary svg{width:36px;height:36px;color:var(--ink);flex:none}
+.paths h4{margin:10px 0 2px;color:var(--olive);font-size:.95rem}
+.paths .real{color:var(--good);font-size:.75rem;border:1.5px solid currentColor;border-radius:999px;padding:0 8px;margin-inline-start:auto;font-weight:700}
+.paths .what{color:var(--muted);font-size:.75rem;border:1.5px dashed currentColor;border-radius:999px;padding:0 8px;margin-inline-start:auto;font-weight:700}
+.takeaway{counter-reset:k;list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.takeaway li{counter-increment:k;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;background:var(--card);border-radius:10px;padding:10px 12px}
+.takeaway li::before{content:counter(k);font-family:var(--f-mono);background:var(--olive);color:var(--olive-ink);border-radius:50%;width:28px;height:28px;display:grid;place-items:center;font-size:.85rem}
+.ext{font-size:.85rem}
+.closing{background:var(--ink);color:var(--paper);border-radius:18px;padding:20px;display:grid;gap:14px}
+.closing h3{color:var(--tape)}
+.closing p{font-family:var(--f-display);font-size:1.3rem;line-height:1.7}
+.closing .media figcaption{color:var(--paper);opacity:.75}
+.board{display:grid;gap:12px}
+.board form{display:grid;grid-template-columns:1fr 110px auto;gap:8px}
+.board input[type=number]::placeholder{font-family:var(--f-body);letter-spacing:0}
+.board input[type=number]{width:100%;font:500 1.05rem var(--f-mono);padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)}
+@media (max-width:480px){.board form{grid-template-columns:1fr 90px}.board form .btn{grid-column:1/-1}}
+.brow{display:grid;grid-template-columns:36px 1fr auto 32px;gap:10px;align-items:center;background:var(--card);border-radius:10px;padding:8px 12px}
+.brow .rk{font-family:var(--f-mono);font-weight:500;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--paper)}
+.brow.top1 .rk{background:var(--tape);color:var(--tape-ink)}
+.brow .nm{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .bar{grid-column:2/4;height:8px;border-radius:4px;background:var(--paper);overflow:hidden}
+.brow .bar i{display:block;height:100%;background:var(--olive)}
+.brow .sc{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:1.1rem}
+.brow .del{border:0;background:transparent;color:var(--muted);font-size:1rem;cursor:pointer;grid-row:1/3;grid-column:4}
+.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.gal figure{margin:0;min-width:0}
+.gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;background:var(--card2)}
+.gal figcaption{font-size:.75rem;color:var(--muted);padding-top:3px}
+.sus .sphoto{width:100%;aspect-ratio:1;object-fit:cover;object-position:center 30%;border-radius:10px;display:block}
+.sus .num{z-index:1;background:var(--paper);border-radius:4px;padding:0 6px;top:20px;inset-inline-start:20px;color:var(--ink);font-weight:700}
+.dlg-head img{width:64px;height:64px;object-fit:cover;border-radius:12px;flex:none}
+.pick button img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;display:block}
+.vwrap{position:relative}
+.playbtn{position:absolute;inset:0;margin:auto;width:72px;height:72px;border-radius:50%;border:0;background:rgba(15,20,12,.72);color:#fff;font-size:1.8rem;cursor:pointer;display:grid;place-items:center;padding-inline-start:6px}
+.portrait{display:grid;grid-template-columns:minmax(0,220px) 1fr;gap:14px;align-items:start}
+.portrait img{width:100%;border-radius:14px;display:block}
+@media (max-width:560px){.portrait{grid-template-columns:1fr}}
+.ba img{display:block;width:100%;aspect-ratio:315/205;object-fit:cover}
+.ba .after img{height:100%;object-fit:cover}
+.dlg .gal img{aspect-ratio:auto;max-height:340px;object-fit:contain;background:var(--card)}
+.ptype img{width:64px;height:64px;object-fit:cover;border-radius:10px}
+.mrow img{width:52px;height:52px;object-fit:cover;border-radius:10px}
+.arena h2{color:var(--ink)}
+.arena{
+  --night:#0b120d; --pitch:#121c15; --panel:#18241b; --line:#2a3a2d;
+  --ink:#eef2e6; --muted:#9aa892; --lime:#a9cc6e; --lime-ink:#0b120d;
+  --gold:#f2c14e; --silver:#cfd6dd; --bronze:#d08a4a; --bad:#e57a6a;
+  --f-display:"Lalezar","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  
+color-scheme:dark;background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;min-height:100vh;background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(169,204,110,.16),transparent 70%)}
+
+/* Layout: a night-stadium scoreboard — one committed dark look. Top: session bar. Body: edit list or reveal stage with podium. */
+
+
+
+
+.arena .arena-in{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;display:grid;gap:20px}
+.arena h1,.arena h2{font-family:var(--f-display);font-weight:400;margin:0;line-height:1.2;text-wrap:balance}
+.arena h1{font-size:clamp(2rem,6vw,3.2rem);color:var(--gold);letter-spacing:.01em}
+.arena h2{font-size:clamp(1.4rem,4vw,1.9rem)}
+.arena p{margin:0}
+.arena .muted{color:var(--muted)}
+.arena button,.arena input,.arena select{font:inherit}
+.arena .btn{border:0;border-radius:12px;padding:11px 18px;font-weight:700;cursor:pointer;background:var(--lime);color:var(--lime-ink)}
+.arena .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.arena .btn.gold{background:var(--gold);color:#241a00}
+.arena .btn.danger{background:transparent;color:var(--bad);border:1.5px solid var(--bad)}
+.arena .btn:disabled{opacity:.4;cursor:default}
+.arena .btn:focus-visible,.arena button:focus-visible,.arena input:focus-visible,.arena select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.arena input[type=text],.arena input[type=number],.arena select{background:var(--pitch);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;width:100%;min-width:0}
+.arena input[type=number]{font-family:var(--f-mono);text-align:center}
+.arena input::placeholder{font-family:var(--f-body);letter-spacing:0;color:var(--muted)}
+
+.arena .head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.arena .head .sub{font-size:.9rem;color:var(--muted)}
+.arena .status{font-size:.78rem;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted)}
+.arena .bar{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--pitch);border:1px solid var(--line);border-radius:16px;padding:12px}
+@media (max-width:560px){.arena .bar{grid-template-columns:1fr 1fr}.arena .bar select{grid-column:1/-1}}
+.arena .newform{display:grid;grid-template-columns:1fr auto auto;gap:8px}
+@media (max-width:560px){.arena .newform{grid-template-columns:1fr}}
+.arena .tabs{display:flex;gap:6px;background:var(--pitch);border:1px solid var(--line);border-radius:14px;padding:5px;justify-self:start}
+.arena .tabs button{border:0;background:transparent;color:var(--muted);padding:8px 18px;border-radius:10px;font-weight:700;cursor:pointer}
+.arena .tabs button[aria-pressed=true]{background:var(--lime);color:var(--lime-ink)}
+
+/* edit */
+.arena .panel{background:var(--pitch);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}
+.arena .addrow{display:grid;grid-template-columns:1fr 110px auto;gap:8px}
+@media (max-width:480px){.arena .addrow{grid-template-columns:1fr 90px}.arena .addrow .btn{grid-column:1/-1}}
+.arena .teams{display:grid;gap:8px}
+.arena .trow{display:grid;grid-template-columns:1fr 92px 40px;gap:8px;align-items:center;background:var(--panel);border-radius:12px;padding:8px}
+.arena .trow input[type=text]{background:transparent;border-color:transparent;font-weight:700}
+.arena .trow input[type=text]:focus{border-color:var(--line)}
+.arena .trow .x{border:0;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;border-radius:8px;height:40px}
+.arena .trow .x:hover{color:var(--bad)}
+.arena .empty{border:1.5px dashed var(--line);border-radius:16px;padding:28px 16px;text-align:center;display:grid;gap:6px;color:var(--muted)}
+.arena .empty b{color:var(--ink);font-size:1.05rem}
+.arena .confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:rgba(229,122,106,.1);border:1px solid var(--bad);border-radius:12px;padding:10px 12px}
+
+/* stage */
+.arena .stage{position:relative;background:linear-gradient(180deg,var(--pitch),var(--night));border:1px solid var(--line);border-radius:22px;padding:22px 16px;display:grid;gap:20px;overflow:hidden}
+.arena .stage .title{text-align:center;display:grid;gap:4px}
+.arena .stage .title h2{color:var(--gold);font-size:clamp(1.8rem,5vw,2.8rem)}
+.arena .controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.arena .podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:end;max-width:640px;margin:0 auto;width:100%}
+.arena .pod{display:grid;gap:6px;justify-items:center;text-align:center;opacity:.18;transition:opacity .4s,transform .5s cubic-bezier(.2,1.4,.4,1);transform:translateY(16px)}
+.arena .pod.on{opacity:1;transform:none}
+.arena .pod .nm{font-family:var(--f-display);font-size:clamp(1rem,3.4vw,1.6rem);line-height:1.15;word-break:break-word}
+.arena .pod .sc{font-family:var(--f-mono);font-size:clamp(1.3rem,4.5vw,2.2rem);font-variant-numeric:tabular-nums}
+.arena .pod .rk{font-size:.75rem;color:var(--muted)}
+.arena .pod .block{width:100%;border-radius:12px 12px 4px 4px;display:grid;place-items:center;font-family:var(--f-display);font-size:clamp(2rem,7vw,3.6rem);color:#1b1400}
+.arena .p1{order:2}.arena .p1 .block{height:150px;background:linear-gradient(180deg,#ffd970,var(--gold))}
+.arena .p2{order:1}.arena .p2 .block{height:110px;background:linear-gradient(180deg,#eef2f5,var(--silver))}
+.arena .p3{order:3}.arena .p3 .block{height:84px;background:linear-gradient(180deg,#eaa56a,var(--bronze))}
+.arena .p1 .sc{color:var(--gold)}.arena .p2 .sc{color:var(--silver)}.arena .p3 .sc{color:var(--bronze)}
+.arena .crown{width:44px;height:30px;color:var(--gold)}
+.arena .rest{display:grid;gap:8px;max-width:640px;margin:0 auto;width:100%}
+.arena .rrow{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;background:var(--panel);border-radius:12px;padding:10px 14px;opacity:.15;transition:opacity .35s,transform .35s;transform:translateX(-12px)}
+.arena .rrow.on{opacity:1;transform:none}
+.arena .rrow .n{font-family:var(--f-mono);color:var(--muted)}
+.arena .rrow .nm{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arena .rrow .sc{font-family:var(--f-mono);font-size:1.2rem;font-variant-numeric:tabular-nums}
+.arena .rrow .meter{grid-column:2/4;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.arena .rrow .meter i{display:block;height:100%;background:var(--lime);width:0;transition:width 1s ease}
+.arena .hidden-name{filter:blur(8px)}
+#sb-count{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(5,8,6,.88);text-align:center}
+#sb-count .n{font-family:var(--f-display);font-size:clamp(7rem,32vw,14rem);color:var(--gold);line-height:1}
+#sb-count .l{font-family:var(--f-display);font-size:1.6rem}
+#sb-fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+.arena .toast{min-height:1.5em;font-size:.9rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+ #sb-count .n{animation:beat .7s ease}@keyframes beat{from{transform:scale(1.7);opacity:0}to{transform:none;opacity:1}}
+ .arena .pod.on.p1 .block{animation:glow 2s ease-in-out infinite alternate}@keyframes glow{to{box-shadow:0 0 40px rgba(242,193,78,.55)}}
+}
+
+
+.arena .lrow{display:grid;grid-template-columns:44px 1fr auto;gap:4px 12px;align-items:center;background:var(--panel);border-radius:14px;padding:12px 14px;border:1.5px solid transparent}
+.arena .lrow.me{border-color:var(--lime)}
+.arena .lrow.lead{border-color:var(--gold)}
+.arena .lrow .lp{font-family:var(--f-display);font-size:1.6rem;color:var(--muted);text-align:center}
+.arena .lrow.lead .lp{color:var(--gold)}
+.arena .lrow .ln{display:grid;min-width:0}
+.arena .lrow .ln b{font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arena .lrow .ln small{color:var(--muted);font-size:.8rem}
+.arena .lrow .ls{font-family:var(--f-mono);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.arena .lrow .meter{grid-column:2/4;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.arena .lrow .meter i{display:block;height:100%;background:var(--lime);transition:width .8s ease}
+.bcount{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(5,8,6,.88);text-align:center;color:#eef2e6}
+.bcount .n{font-family:"Lalezar",sans-serif;font-size:clamp(7rem,32vw,14rem);color:#f2c14e;line-height:1}
+.bcount .l{font-family:"Lalezar",sans-serif;font-size:1.6rem}
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="t-wolf" viewBox="0 0 60 60"><g fill="currentColor"><path d="M30 34c-8 0-13 6-13 12 0 4 5 5 13 5s13-1 13-5c0-6-5-12-13-12z"/><ellipse cx="17" cy="27" rx="4.5" ry="6" transform="rotate(-15 17 27)"/><ellipse cx="43" cy="27" rx="4.5" ry="6" transform="rotate(15 43 27)"/><ellipse cx="25" cy="17" rx="4.5" ry="6.5"/><ellipse cx="35" cy="17" rx="4.5" ry="6.5"/><path d="M25 9l-1-4M35 9l1-4M16 20l-2-3M44 20l2-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g></symbol>
+    <symbol id="t-coyote" viewBox="0 0 60 60"><g fill="currentColor" transform="translate(9 9) scale(.7)"><path d="M30 34c-8 0-13 6-13 12 0 4 5 5 13 5s13-1 13-5c0-6-5-12-13-12z"/><ellipse cx="17" cy="27" rx="4.5" ry="6" transform="rotate(-15 17 27)"/><ellipse cx="43" cy="27" rx="4.5" ry="6" transform="rotate(15 43 27)"/><ellipse cx="25" cy="17" rx="4.5" ry="6.5"/><ellipse cx="35" cy="17" rx="4.5" ry="6.5"/><path d="M25 9l-1-4M35 9l1-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g></symbol>
+    <symbol id="t-bear" viewBox="0 0 60 60"><g fill="currentColor"><path d="M10 30c0-3 6-5 20-5s20 2 20 5-3 18-20 18S10 33 10 30z"/><ellipse cx="11" cy="20" rx="4" ry="4.5"/><ellipse cx="20" cy="15" rx="4.2" ry="4.8"/><ellipse cx="30" cy="13" rx="4.4" ry="5"/><ellipse cx="40" cy="15" rx="4.2" ry="4.8"/><ellipse cx="49" cy="20" rx="4" ry="4.5"/><path d="M11 14v-4M20 9V5M30 7V3M40 9V5M49 14v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g></symbol>
+    <symbol id="t-cat" viewBox="0 0 60 60"><g fill="currentColor"><path d="M17 40c0-7 6-10 13-10s13 3 13 10c0 5-3 9-6 9-2 0-3-2-7-2s-5 2-7 2c-3 0-6-4-6-9z"/><circle cx="15" cy="27" r="4.5"/><circle cx="24" cy="18" r="5"/><circle cx="36" cy="18" r="5"/><circle cx="45" cy="27" r="4.5"/></g></symbol>
+    <symbol id="t-beaver" viewBox="0 0 60 60"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M24 54c-4-6-4-14 6-18 10 4 10 12 6 18z" fill="currentColor"/><path d="M27 37L12 18M29 36L21 8M31 36L39 8M33 37L48 18M26 40L8 34"/><path d="M12 18Q16 12 21 8Q30 4 39 8Q44 12 48 18" stroke-width="1.5" opacity=".55"/></g></symbol>
+    <symbol id="t-fence" viewBox="0 0 60 60"><g fill="currentColor"><rect x="9" y="12" width="5" height="40" rx="1"/><rect x="27.5" y="12" width="5" height="40" rx="1"/><rect x="46" y="12" width="5" height="40" rx="1"/><path d="M6 22h48M6 34h48M6 46h48" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 2"/></g></symbol>
+    <symbol id="t-cull" viewBox="0 0 60 60"><g stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="none"><path d="M14 14v32M23 14v32M32 14v32M41 14v32M8 40L48 18"/></g></symbol>
+    <symbol id="t-elk" viewBox="0 0 60 60"><g fill="currentColor"><path d="M28 10c-8 1-13 12-12 26 1 10 5 15 10 15 2 0 3-2 3-6V12c0-1-0-2-1-2z"/><path d="M32 10c8 1 13 12 12 26-1 10-5 15-10 15-2 0-3-2-3-6V12c0-1 0-2 1-2z"/></g></symbol>
+    <symbol id="s-elk" viewBox="0 0 44 34"><g fill="currentColor"><ellipse cx="18" cy="17" rx="11" ry="6"/><rect x="9" y="20" width="2.4" height="12" rx="1"/><rect x="13" y="21" width="2.4" height="11" rx="1"/><rect x="22" y="21" width="2.4" height="11" rx="1"/><rect x="26" y="20" width="2.4" height="12" rx="1"/><path d="M26 14L33 5 37 7 31 18z"/><ellipse cx="37" cy="7" rx="5" ry="2.8" transform="rotate(20 37 7)"/><path d="M35 4L32-3M32-3L29-6M34 1L31 0M38 4L41-3M41-3L44-5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></g></symbol>
+    <symbol id="badge" viewBox="0 0 72 72"><path d="M36 3l8 6 10-1 4 9 9 5-2 10 5 9-7 7-1 10-10 2-6 8-10-3-10 3-6-8-10-2-1-10-7-7 5-9-2-10 9-5 4-9 10 1z" fill="var(--tape)"/><circle cx="36" cy="36" r="21" fill="var(--olive)"/><path d="M36 22l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="var(--paper)"/></symbol>
+    <symbol id="t-cwd" viewBox="0 0 60 60"><g stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"><circle cx="30" cy="30" r="12" fill="currentColor"/><path d="M30 6v8M30 46v8M6 30h8M46 30h8M13 13l6 6M41 41l6 6M13 47l6-6M41 19l6-6"/><circle cx="30" cy="5" r="2.5" fill="currentColor"/><circle cx="30" cy="55" r="2.5" fill="currentColor"/><circle cx="5" cy="30" r="2.5" fill="currentColor"/><circle cx="55" cy="30" r="2.5" fill="currentColor"/></g></symbol>
+    <symbol id="t-leaf" viewBox="0 0 60 60"><g fill="currentColor"><path d="M30 56V8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M30 16c-10-2-16 2-20 8 8 2 15 0 20-8zM30 16c10-2 16 2 20 8-8 2-15 0-20-8zM30 30c-10-2-16 2-20 8 8 2 15 0 20-8zM30 30c10-2 16 2 20 8-8 2-15 0-20-8zM30 44c-9-2-14 2-17 7 7 2 13 0 17-7zM30 44c9-2 14 2 17 7-7 2-13 0-17-7z"/></g></symbol>
+    <symbol id="g-ambush" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 50c6-10 10-10 14 0M14 50c6-14 12-14 16 0M26 50c6-10 10-10 14 0M38 50c6-14 12-14 16 0M50 50c4-8 7-8 10 0"/><path d="M18 34q14-12 28 0q-14 12-28 0z"/><circle cx="32" cy="34" r="4" fill="currentColor"/><path d="M48 18l6-6M52 24l8-2M44 14l2-8"/></g></symbol>
+    <symbol id="g-chase" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22h16M2 32h18M6 42h16"/><circle cx="32" cy="32" r="5" fill="currentColor"/><circle cx="44" cy="24" r="4" fill="currentColor"/><circle cx="44" cy="40" r="4" fill="currentColor"/><path d="M50 32h10M55 27l5 5-5 5"/></g></symbol>
+    <symbol id="g-small" viewBox="0 0 64 64"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 48h44"/><path d="M14 48c0-8 4-12 10-12s10 4 10 12"/><circle cx="24" cy="30" r="4"/><path d="M40 48l4-10 4 10M38 40h12" /><path d="M44 20v8M40 24h8"/></g></symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <span class="team" id="teamLabel">فريق التحقيق</span>
+    <span class="pill streak" id="streak" hidden></span>
+    <span class="pill" id="hintsLabel"></span>
+    <button class="pill" id="soundBtn" type="button"></button>
+    <span class="score" id="scoreLabel">0</span>
+    <nav class="steps" id="steps" aria-label="مراحل القضية"></nav>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+
+<section class="arena" id="arena" hidden>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="crown" viewBox="0 0 44 30"><path d="M3 26L6 6l10 10 6-14 6 14 10-10 3 20z" fill="currentColor"/><rect x="3" y="26" width="38" height="4" rx="1" fill="currentColor"/></symbol></defs></svg>
+<div class="arena-in">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" data-arena-back>رجوع إلى اللعبة</button><span class="status" id="bStatus">جارٍ التحميل…</span></div>
+  <header class="head"><div><h1>ترتيب الفرق</h1><p class="sub">قضية حديقة يلوستون الوطنية · يتحدّث تلقائيًا كل بضع ثوانٍ</p></div></header>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+    <div class="tabs" role="group" aria-label="طريقة العرض"><button type="button" data-bmode="live" aria-pressed="true">الترتيب المباشر</button><button type="button" data-bmode="show" aria-pressed="false">حفل التتويج</button></div>
+    <label class="muted" style="display:flex;gap:8px;align-items:center;font-size:.9rem">الفرق:<select id="bRange" style="width:auto"><option value="today">فرق اليوم</option><option value="hour">آخر 3 ساعات</option><option value="all">كل الفرق</option></select></label>
+  </div>
+  <section id="bLive" class="panel" aria-label="الترتيب المباشر">
+    <div class="teams" id="bList"></div>
+  </section>
+  <section id="bShow" class="stage" hidden aria-label="حفل التتويج">
+    <div class="title"><p class="muted" id="bShowNote"></p><h2>من يحمل لقب كبير علماء يلوستون؟</h2></div>
+    <div class="controls">
+      <button class="btn gold" type="button" id="bReveal">ابدأ الكشف</button>
+      <button class="btn ghost" type="button" id="bNext" hidden>المركز التالي</button>
+      <button class="btn ghost" type="button" id="bAll">اكشف الكل</button>
+      <button class="btn ghost" type="button" id="bFs">ملء الشاشة</button>
+    </div>
+    <div class="podium" id="bPodium"></div>
+    <div class="rest" id="bRest"></div>
+  </section>
+</div>
+<div id="bCount" class="bcount" hidden><div><div class="n" id="bCountN">3</div><div class="l">والمركز الأول…</div></div></div>
+</section>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<div id="count" hidden><div><div class="n" id="countN">3</div><div class="l">إدارة المتنزه تراجع قراركم…</div></div></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script>
+const LINKS={
+  elk:"https://www.nps.gov/yell/learn/nature/elk.htm",
+  elkys:"https://www.nps.gov/yell/learn/ys-24-1-the-challenge-of-understanding-northern-yellowstone-elk-dynamics-after-wolf-reintroduction.htm",
+  wolfrep:"https://www.nps.gov/yell/learn/nature/upload/wolfreport_95-96_508.pdf",
+  cougar:"https://www.nps.gov/yell/learn/nature/cougar.htm",
+  beaver:"https://www.nps.gov/yell/learn/nature/beaver.htm",
+  calves:"https://www.usgs.gov/publications/elk-calf-survival-and-mortality-following-wolf-restoration-yellowstone-national-park",
+  willow:"https://grantome.com/grant/NSF/DEB-0717367",
+  cwd:"https://wwwnc.cdc.gov/eid/article/12/10/06-0019"
+};
+const STEPS=["البداية","القصة","المهمة","الأيائل","الأدلة","الاستجواب","القرار","الكشف"];
+const REVEAL=7;
+const CRITERIA=[
+ ["الهدف","هل المطلوب خفض أعداد الأيائل، أو تقليل ضغطها على النباتات، أو تحقيق الأمرين؟"],
+ ["الآلية","كيف سيؤثر المرشح في المشكلة؟ وهل التأثير مباشر أو غير مباشر؟"],
+ ["المرحلة العمرية","هل يؤثر في العجول، أو الإناث البالغة، أو أفراد القطيع عمومًا؟"],
+ ["الملاءمة البيئية","هل هو موجود أصلًا؟ وهل تتوافر له احتياجات البقاء؟"],
+ ["الآثار غير المستهدفة","ما الأنواع الأخرى التي قد تتأثر؟"],
+ ["قوة الأدلة","هل يستند الاختيار إلى أدلة ميدانية، أو إلى توقع نظري فقط؟"],
+ ["قابلية الإدارة","هل يمكن مراقبة التدخل أو تعديله إذا ظهرت نتائج غير مرغوبة؟"]
+];
+const TF=[
+ ["الأيائل تصطاد حيوانات صغيرة لتكمل غذاءها.",false,"الأيائل عاشبة. هي تتجنب المفترسات ولا تصطاد."],
+ ["قد تنتقل الأيائل موسميًا بين المتنزه والأراضي المحيطة.",true,"ولهذا تمتد المشكلة إلى خارج حدود المتنزه."],
+ ["العجول أكثر عرضة للافتراس من الأفراد البالغة.",true,"صغر الحجم وقلة الخبرة يجعلانها فريسة أسهل."],
+ ["عمق الثلوج وشدة الشتاء لا يؤثران في الأيائل.",false,"بالعكس، هذه من أهم نقاط ضعفها."],
+ ["عدد عمليات القتل وحده مقياس كافٍ لأثر المفترس.",false,"يجب معرفة الفئات العمرية المستهدفة وتكرار الافتراس وأثره في بقاء القطيع."]
+];
+const PTYPES=[["ambush","يعتمد على الكمين"],["chase","يطارد الفريسة"],["small","انتهازي: يركز على العجول والجيف"],["none","لا يفترس الأيائل"]];
+const MATCH=[{img:"bear-1.jpg",n:"الدب الرمادي",a:"small"},{img:"cougar-1.jpg",n:"أسد الجبال (الكوغر)",a:"ambush"},{img:"beaver-1.jpg",n:"القندس الأمريكي",a:"none"},{img:"wolf-1.jpg",n:"الذئب الرمادي",a:"chase"},{img:"cwd-info.jpg",n:"مرض الهزال المزمن",a:"none"},{img:"willow-river.jpg",n:"الصفصاف والحور",a:"none"}];
+
+const EVIDENCE=[
+ {t:"البراعم التي لا تكبر",img:[["aspen-twig.jpg","براعم وأغصان حديثة على شجيرة حور"],["fence-before.jpg","موقع محاط بسياج يمنع الرعي: قبل"],["fence-after.jpg","الموقع نفسه بعد سنوات: الصفصاف كثيف داخل الحماية"]],obs:"توجد شجيرات صفصاف ونباتات حور تحمل آثار تصفح متكرر على البراعم والأغصان الحديثة. وفي بعض المواقع، لا يصل كثير من النموات الجديدة إلى ارتفاع يسمح لها بتكوين غطاء نباتي كثيف.",exp:"ضغط الرعي المتكرر قد يمنع تجدد النباتات، لكن شدته تختلف من موقع إلى آخر.",
+  q:"هل يكفي منع الرعي في هذه المواقع، أم أن مصدر الضغط يجب أن يتغير أيضًا؟",
+  o:["لا يكفي، لأن مصدر الضغط ينتقل لمواقع أخرى ما لم يتغير هو نفسه", "يكفي إذا شمل السياج كل المواقع المتضررة على ضفاف الأنهار كلها", "يكفي مؤقتًا، ثم تعود الأيائل وحدها إلى توازن طبيعي مع النبات"],a:0,
+  fb:"السياج يحمي ما بداخله فقط، والأيائل تنتقل إلى مكان آخر. وتسييج كل الضفاف غير ممكن عمليًا، ولا يغيّر شيئًا في القطيع نفسه."},
+ {t:"اختلاف الغطاء النباتي قرب الأنهار",img:[["meander-before.jpg","مجرى متعرج بضفاف شبه عارية"],["meander-after.jpg","المجرى نفسه بعد عودة الشجيرات على ضفافه"],["willow-river.jpg","صفصاف كثيف على ضفة نهر"]],obs:"بعض المواقع النهرية التي تحتوي على نباتات خشبية كثيفة توفر غطاءً وظلًا أكبر من مواقع أخرى ذات تجدد نباتي محدود.",exp:"قد تؤثر كثافة النباتات في تماسك ضفاف النهر وتظليل المياه وتوافر الموائل. لكن شكل النهر يتأثر أيضًا بالتدفق والمناخ والتضاريس.",
+  q:"هل تعكس هذه الفروق سببًا واحدًا، أم سلسلة من التفاعلات؟",
+  o:["سبب واحد رئيسي هو الرعي، وبقية العوامل نتائج له لا أسباب", "سبب واحد رئيسي هو المناخ، والرعي أثره محدود على هذه الضفاف", "سلسلة تفاعلات يشترك فيها الرعي والنبات والضفاف والتدفق والمناخ"],a:2,
+  fb:"الرعي مهم، لكنه حلقة في سلسلة: النبات يؤثر في الضفاف والظل، والتدفق والمناخ يؤثران في الجميع."},
+ {t:"غياب بعض علامات بناء السدود",img:[["dam-1.jpg","سد قندس من الأغصان يحجز الماء"],["dam-2.jpg","سد قندس يكوّن بركة خلفه"]],obs:"تختلف آثار القنادس من مجرى مائي إلى آخر. ففي بعض المواقع تظهر آثار قضم النباتات وبناء السدود أو الجحور، بينما تقل هذه العلامات في مواقع أخرى.",exp:"تحتاج القنادس إلى غذاء وغطاء نباتي ومياه وخصائص ملائمة للمجرى. ولا يكفي وجود نهر وحده لضمان استقرار مستعمرة.",
+  q:"هل القندس سبب المشكلة، أم أنه كائن قد يستفيد من استعادة الموطن؟",
+  o:["سبب جزئي، لأن قضمه للصفصاف يضاعف الضغط الذي تسببه الأيائل", "مستفيد، لأنه يحتاج الصفصاف للغذاء والبناء فيعود حين يعود النبات", "حل مباشر، لأن سدوده ترفع الماء فيعود الصفصاف رغم استمرار الرعي"],a:1,
+  fb:"القندس يعتمد على الصفصاف أصلًا. سدوده تساعد النهر، لكنها تحتاج نباتًا يكفي للبناء، فلا تنجح وحدها مع رعي شديد."},
+ {t:"القطيع لا يتحرك بالطريقة نفسها في كل مكان",img:[["herd-9.jpg","قطيع أيائل يتحرك بين المرج والطريق"],["hero-elk-snow.jpg","ذكور الأيائل تتجمع على أرض مكسوة بالثلج"]],obs:"تتغير حركة الأيائل بين المواسم، وقد تتجمع في مناطق معينة حيث يتوفر الغذاء أو تقل كلفة الحركة خلال الشتاء.",exp:"قد يؤثر توفر الغذاء والثلوج والاضطراب البشري وخطر الافتراس في توزيع الأيائل.",
+  q:"هل يغيّر التدخل الناجح عدد الأيائل فقط، أم قد يؤثر أيضًا في أماكن تغذيتها؟",
+  o:["قد يؤثر في الاثنين، فيقلل العدد ويغيّر أين تتغذى الأيائل وكم تبقى", "العدد أساسًا، لأن أماكن التغذية تحددها الثلوج والغذاء فقط لا غير", "أماكن التغذية أساسًا، لأن العدد تحدده شدة الشتاء والصيد فقط"],a:0,
+  fb:"الثلوج والغذاء مهمان، لكن خطر الافتراس أيضًا قد يغيّر أين تقف الأيائل وكم تبقى، وهذا ينعكس على النباتات."},
+ {t:"احتمال لا يجوز تجاهله",img:[["cwd-info.jpg","إنفوجرافيك عن مرض الهزال المزمن (إدارة الأسماك والحياة البرية في كاليفورنيا)"]],obs:"توجد أمراض تصيب الأيليات، ومنها مرض الهزال المزمن الذي تسببه بروتينات غير طبيعية تسمى البريونات، ويمكن أن ينتشر بين الأيليات القابلة للإصابة.",exp:"قد يسبب المرض نفوقًا ويؤثر في جماعات الأيائل، لكنه لا يصلح وسيلة آمنة لإدارة أعدادها. ولم تُسجل إصابات بشرية مؤكدة به، لكن احتمال إصابة البشر لم يُحسم علميًا بصورة نهائية.",
+  q:"هل كل عامل يخفض أعداد الحيوان يمكن اعتباره وسيلة مكافحة مناسبة؟",
+  o:["نعم، إذا كان فعالًا ولم تُسجَّل إصابات بشرية مؤكدة به حتى الآن", "نعم، إذا استُخدم في منطقة محدودة وتحت إشراف الجهات المختصة", "لا، يجب أن يكون محددًا وآمنًا ويمكن مراقبته وإيقافه عند الحاجة"],a:2,
+  fb:"المرض لا يمكن حصره في منطقة ولا إيقافه بعد بدئه، ويبقى في البيئة وينتقل لأيليات أخرى. الإشراف لا يغيّر هذه الطبيعة."}
+];
+const DECOYS={rock:"صخرة. فقط صخرة. تابعوا البحث.",raven:"طائر يحوم فوق الوادي. تذكروه، قد يعود لكم في نهاية القضية.",pine:"شجرة صنوبر سليمة، لا شيء غريب فيها.",cloud:"غيمة. المحقق الذكي لا يضيّع وقته في السماء."};
+
+const SUSPECTS=[
+ {id:"bear",img:["bear-1.jpg","bear-2.jpg","bear-3.jpg"],L:"A",t:"t-bear",n:"الدب الرمادي",s:"Ursus arctos horribilis",tag:"قارت كبير",ok:["support","out"],link:["calves","دراسة نفوق عجول الأيائل (هيئة المسح الجيولوجي الأمريكية)"],
+  say:"آكل كل شيء: توت، جذور، حشرات، جيف… العجول؟ أسابيع قليلة في الربيع، ثم أعود لطعامي.",
+  f:[["نوع الكائن","ثديي قارت؛ مفترس وآكل نباتات وجيف"],["الحالة في يلوستون","نوع محلي أصيل؛ كان موجودًا في المنطقة"],["العدد في ذلك الوقت","لا يتوفر هنا تعداد موحد موثوق يحدد عدد الدببة الرمادية في شمال يلوستون عام 1994"],["الغذاء","التوت والجذور والنباتات والحشرات والجيف، وقد يفترس بعض الحيوانات"],["طريقة الصيد","يعتمد على الفرص المتاحة؛ وقد يقتل عجول الأيائل أو يستفيد من الحيوانات النافقة"],["الأثر المحتمل","قد يضيف ضغطًا على العجول، ويؤثر في شبكة الغذاء عبر الافتراس والتغذي على الجيف"],["القيود","نظامه الغذائي واسع ولا يعتمد على الأيائل وحدها، فلا يُتوقع أن يعمل وحده منظمًا متخصصًا لقطيع الأيائل"]]},
+ {id:"cougar",img:["cougar-2.jpg","cougar-1.jpg","cougar-kill.jpg"],L:"B",t:"t-cat",n:"أسد الجبال (الكوغر)",s:"Puma concolor",tag:"مفترس كمائن",ok:["support","out"],link:["cougar","صفحة الكوغر على موقع المتنزه"],
+  say:"لا أطارد أحدًا. أنتظر بين الصخور… لكن الأيائل تقف في الوادي المفتوح، بعيدًا عني.",
+  f:[["نوع الكائن","ثديي مفترس"],["الحالة في يلوستون","نوع محلي؛ أُبيد تقريبًا مع الذئاب في ثلاثينيات القرن العشرين، ثم عاد طبيعيًا بحلول أوائل الثمانينيات"],["العدد في ذلك الوقت","قُدّر بنحو 15–22 فردًا في شمال يلوستون خلال 1987–1993"],["الغذاء","الأيائل والغزلان، وفرائس أخرى بحسب توافرها"],["طريقة الصيد","مفترس كمين؛ يتسلل إلى الفريسة ثم ينقض عليها، وقد يستهدف العجول أو أفرادًا أكبر عندما تتاح الفرصة"],["الأثر المحتمل","افتراس مباشر للأيائل، مع تأثير محتمل في توزيع الفرائس وسلوكها"],["القيود","أعداده محدودة نسبيًا ويصطاد منفردًا، والدببة والذئاب كثيرًا ما تنتزع فرائسه"]]},
+ {id:"beaver",img:["beaver-1.jpg","beaver-2.jpg","beaver-hat.jpg"],L:"C",t:"t-beaver",n:"القندس الأمريكي",s:"Castor canadensis",tag:"مهندس الأنهار",ok:["support"],link:["beaver","صفحة القنادس على موقع المتنزه"],
+  say:"أنا الضحية هنا، لست المتهم! لا يوجد صفصاف، فمن أين أبني سدّي؟",
+  f:[["نوع الكائن","ثديي عاشب شبه مائي"],["الحالة في يلوستون","نوع محلي أصيل؛ تراجعت مستعمراته في شمال المتنزه خلال القرن العشرين"],["العدد في ذلك الوقت","لا يتوفر تعداد موثوق للمستعمرات عام 1994 يمكن مقارنته مباشرة بالتعداد الحديث"],["الغذاء","اللحاء والأغصان والنباتات الخشبية، ومنها الصفصاف والحور عند توافرها"],["طريقة التأثير","يقضم النباتات الخشبية، ويبني السدود حيث تسمح ظروف المجرى، ويكوّن بركًا وأراضي رطبة"],["الأثر المحتمل","قد يعزز بعض الموائل النهرية، ويغيّر حركة المياه وتخزينها محليًا"],["القيود","لا يفترس الأيائل ولا يخفض أعدادها، ونجاحه يعتمد على الغذاء والمياه وخصائص الموقع"]]},
+ {id:"wolf",img:["wolf-1.jpg","wolf-ai.jpg"],L:"D",t:"t-wolf",n:"الذئب الرمادي",s:"Canis lupus",tag:"مفترس اجتماعي",ok:["main"],link:["wolfrep","تقرير مشروع ذئاب يلوستون 1995–1996"],
+  say:"كنت هنا قبل أن تُرسم حدود المتنزه. أُبعدت منه، ومن بعدي لم يعد الوادي كما كان.",
+  f:[["نوع الكائن","ثديي مفترس اجتماعي"],["الحالة في يلوستون","نوع محلي أصيل، لكن لم يبقَ له أي قطيع معروف في المتنزه بحلول 1926"],["العدد في ذلك الوقت","لم تكن في يلوستون جماعة مستقرة ومتكاثرة منه آنذاك"],["الغذاء","يعتمد أساسًا على الفرائس الكبيرة ومنها الأيائل، مع فرائس أخرى بحسب الظروف"],["طريقة الصيد","يعيش في مجموعات، ويتعاون أفرادها في تعقب الفريسة وملاحقتها؛ ويتأثر النجاح بحجم المجموعة وحالة الفريسة والظروف"],["الأثر المحتمل","افتراس مباشر، وتأثير محتمل في توزيع الأيائل وحركتها، وتوفير الجيف لكائنات أخرى"],["القيود","قد يسبب نزاعات مع مربي الماشية خارج المتنزه، ويتأثر بالأمراض والصيد والإدارة البشرية وتوافر الفرائس"]]},
+ {id:"cwd",img:["cwd-info.jpg"],L:"E",t:"t-cwd",n:"مرض الهزال المزمن",s:"Chronic Wasting Disease",tag:"عامل مُمرض",ok:["out"],link:["cwd","مقال مراكز مكافحة الأمراض الأمريكية عن المرض"],
+  say:"أعمل بصمت ولا يراني أحد… ولا يستطيع أحد إيقافي بعد أن أبدأ.",
+  f:[["العامل المسبب","بريونات، وهي بروتينات غير طبيعية وليست بكتيريا أو فيروسًا"],["الكائنات المصابة","الأيائل والغزلان والموظ وغيرها من الأيليات"],["الحالة في يلوستون عام 1994","لا ينبغي افتراض وجود المرض في قطيع شمال يلوستون آنذاك من دون دليل تاريخي محدد"],["طريقة الانتشار","قد ينتقل بين الأيليات القابلة للإصابة عبر سوائل الجسم والبيئة الملوثة"],["الأثر المحتمل","مرض قاتل قد يؤثر في بقاء الأفراد وديناميكيات الجماعة"],["القيود والمخاطر","لا علاج ولا لقاح معتمد، وقد يبقى العامل المسبب في البيئة. استخدامه عمدًا يسبب معاناة وانتشارًا لا يمكن السيطرة عليه ومخاطر صحية وبيئية"]]},
+ {id:"willow",img:["willow-river.jpg","poplar-leaves.jpg","poplars.jpg"],L:"F",t:"t-leaf",n:"استعادة الصفصاف والحور",s:"Salix & Populus",tag:"نباتات خشبية",ok:["support"],link:["willow","مشروع بحثي: هل أعادت الذئاب الصفصاف؟"],
+  say:"أعطوني ماءً وتربة وحماية لبراعمي الصغيرة… وسأعيد الظل للنهر.",
+  f:[["نوع الكائن","نباتات خشبية محلية"],["الحالة في يلوستون","موجودة في الموائل المناسبة، لكن تجددها وارتفاعها يختلفان من موقع إلى آخر"],["العدد في ذلك الوقت","لا يوجد رقم واحد مناسب يصف أعداد كل نباتات الصفصاف والحور في شمال يلوستون"],["متطلبات النمو","الماء والتربة الملائمة والضوء والحماية الكافية للنموات الصغيرة"],["طريقة التأثير","استعادة الغطاء النباتي، وتوفير الظل والموائل، والمساعدة في تثبيت الضفاف عند اكتمال النمو"],["الأثر المحتمل","تحسين الموائل النهرية، وتوفير غذاء وغطاء لكائنات أخرى، وربما تهيئة ظروف لعودة القنادس"],["القيود","قد تستمر الأيائل في أكل النموات الجديدة ما لم تُعالج شدة الرعي أو تُحمَ النباتات في مرحلة التعافي"]]}
+];
+const VERD={main:"تدخل رئيسي",support:"داعم",out:"مستبعد"};
+const PATHS={
+ bear:{what:"قد يستمر افتراس بعض عجول الأيائل، وقد تستفيد أنواع أخرى من الجيف. لكن الدببة تتغذى على مصادر متنوعة ولا تعتمد على الأيائل وحدها، فزيادة أعدادها لا تضمن خفضًا كافيًا أو منتظمًا في القطيع.",why:"لأن الدببة كانت موجودة أصلًا، وزيادة أعدادها عمدًا ليست وسيلة مضمونة لضبط أعداد الأيائل، ولها احتياجاتها ومخاطرها الخاصة."},
+ cougar:{what:"قد يستمر الافتراس المباشر للأيائل، خاصة العجول وبعض الأفراد المعرضة للخطر، وقد يتغير توزيع الأيائل في مناطق معينة بحسب وجود المفترس والغطاء النباتي.",why:"لأن الكوغر كان موجودًا بالفعل، وصيده المنفرد وأعداده المحدودة لا تعني أنه قادر وحده على إعادة الوظيفة البيئية المفقودة. وإكثار المفترسات أو نقلها دون تقييم قد يخلق مشكلات جديدة."},
+ beaver:{what:"في المواقع المناسبة، قد يبني القندس سدودًا ويكوّن بركًا وأراضي رطبة تخلق موائل لكائنات أخرى. لكن ذلك يعتمد على وجود الغذاء والغطاء النباتي وظروف النهر المناسبة.",why:"لأنه لا يفترس الأيائل ولا يخفض أعدادها، ويعتمد على النباتات الخشبية نفسها التي تتراجع. استعادته جزء من التعافي، لا بديل عن فهم سبب الضغط على النباتات."},
+ wolf:{real:true,what:"بعد عقود من الجدل والدراسات، نُقل 14 ذئبًا من كندا عام 1995، ثم 17 عام 1996 (المجموع 31)، ثم 10 من شمال غرب مونتانا عام 1997. كان الهدف استعادة نوع محلي ودور بيئي فقده النظام. استمر افتراس الأيائل، وصارت الذئاب جزءًا من شبكة تفاعلات أوسع تشمل المفترسات الأخرى والكائنات التي تتغذى على الجيف. لكن انخفاض الأيائل لا يُفسَّر بالذئاب وحدها: فقد تداخل معها الصيد خارج المتنزه والجفاف والشتاء والدببة. والسجل يُظهر أن العدّ بدأ ينخفض قبل خروج أول الذئاب من حظائر التأقلم: 19,045 أيلًا في يناير 1994، ثم 2,254 أقل في ديسمبر من العام نفسه.",why:"لأنه أعاد نوعًا محليًا أُزيل من النظام، واستعاد وظيفة لا تقتصر على قتل الأيائل: التأثير في بقائها وحركتها، وتوفير الجيف لغيرها. ومع ذلك، لا تضمن الإعادة وحدها عودة كل النباتات أو الأنهار إلى حالتها السابقة."},
+ cwd:{what:"قد يسبب المرض نفوقًا وينتشر بين الحيوانات القابلة للإصابة. لكن العامل المسبب يبقى في البيئة، وقد ينتشر إلى جماعات أخرى من الأيليات، فيخلق مشكلة طويلة الأمد بدلًا من حل محدد.",why:"لأن إحداث مرض قاتل عمدًا ليس إدارة بيئية آمنة أو أخلاقية. وعدم تسجيل حالات بشرية مؤكدة لا يثبت أن المرض خالٍ من المخاطر على الإنسان."},
+ willow:{what:"قد تنجح زراعة النباتات أو حمايتها في مواقع محددة فتتحسن بعض الموائل النهرية تدريجيًا. لكن إذا استمر التصفح الشديد، فقد تُستهلك البراعم الجديدة قبل أن تكبر.",why:"لأن حماية النباتات تعالج جزءًا مهمًا من المشكلة، لكنها لا تعالج الضغط الذي يمنع تجددها. تنجح أكثر عندما تُدمج مع إدارة العوامل المؤثرة في الأيائل وحركتها وتغذيتها."}
+};
+const TAKEAWAY=[
+ "حدّد الهدف بدقة: خفض الأعداد، أم تقليل الضغط، أم الاثنين؟",
+ "افهم الآلية: كيف سيؤثر العامل؟ ومتى وأين يلتقي بالهدف؟",
+ "اعرف من يستهدف: الصغار، أم الإناث البالغة، أم القطيع كله؟",
+ "تأكد من الملاءمة: هل هو محلي؟ هل يعيش في هذا المكان؟",
+ "ابحث عن الضحايا غير المقصودين قبل أن تبحث عن النتائج.",
+ "اطلب أدلة ميدانية، لا توقعات نظرية فقط.",
+ "لا تختر شيئًا لا تستطيع مراقبته أو إيقافه."
+];
+const RANKS=[[90,"كبير علماء يلوستون"],[75,"خبير نظم بيئية"],[50,"حارس ميداني"],[0,"محقق متدرب"]];
+
+const DEFAULT={teamId:null,teamSecret:null,step:0,maxStep:0,team:"",tf:{},match:{},found:[false,false,false,false,false],ev:[null,null,null,null,null],v:{},final:null,hints:3,hinted:{},hintSpot:null,streak:0,best:0};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const KEY="ys-case5";
+let S,SOUND=true;
+try{S=Object.assign(clone(DEFAULT),JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){S=clone(DEFAULT)}
+try{SOUND=localStorage.getItem("ys-sound")!=="0"}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(typeof queueSync==="function")queueSync()}
+
+function points(){
+  const p={
+    tf:TF.reduce((a,t,i)=>a+(S.tf[i]===t[1]?2:0),0),
+    mt:MATCH.reduce((a,m,i)=>a+(S.match[i]===m.a?1:0),0),
+    ev:S.ev.reduce((a,x,i)=>a+(x===EVIDENCE[i].a?6:0),0),
+    cls:SUSPECTS.reduce((a,s)=>a+(S.v[s.id]&&s.ok.includes(S.v[s.id])?4:0),0),
+    fin:S.final==="wolf"?30:(S.final==="willow"||S.final==="beaver"?10:(S.final==="bear"||S.final==="cougar"?5:0))};
+  p.live=p.tf+p.mt+p.ev;p.total=p.live+p.cls+p.fin;return p;
+}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ico=(id,cls="")=>`<svg class="${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ext=(k,t)=>`<a class="ext" href="${LINKS[k]}" target="_blank" rel="noopener">${t} ↗</a>`;
+const photo=(src,cap)=>`<figure class="photo"><img src="media/${src}" alt="${esc(cap)}" loading="lazy"><figcaption>${cap}</figcaption></figure>`;
+const vid=(src,poster,cap)=>`<figure class="media"><div class="vwrap"><video data-src="media/${src}" poster="media/${poster}" muted loop playsinline controls preload="none"></video><button class="playbtn" type="button" data-play aria-label="شغّلوا الفيديو">▶</button></div><figcaption>${cap}</figcaption></figure>`;
+const gal=list=>`<div class="gal">${list.map(([f,c])=>`<figure><img src="media/${f}" alt="${esc(c)}" loading="lazy"><figcaption>${c}</figcaption></figure>`).join("")}</div>`;
+
+/* sound */
+let AC=null;
+function tone(seq,type="triangle",gap=.09,len=.16,vol=.12){
+  if(!SOUND)return;
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    seq.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+i*gap;
+      o.type=type;o.frequency.value=f;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+len);
+      o.connect(g).connect(AC.destination);o.start(t);o.stop(t+len+.02)});}catch(e){}
+}
+const sfx={good:()=>tone([660,880]),bad:()=>tone([220,165],"square",.12,.18,.06),find:()=>tone([523,784,1046],"sine",.07),tick:()=>tone([440],"sine",0,.12),
+  win:()=>tone([523,659,784,1046,784,1046],"triangle",.12,.25),meh:()=>tone([392,349,330],"triangle",.15,.25)};
+
+/* confetti */
+const cv=$("#fx"),cx=cv.getContext("2d");let parts=[],raf=null;
+function burst(n=70,x=null,y=null){
+  if(reduced)return;
+  const cs=getComputedStyle(document.documentElement);
+  const cols=["--olive","--tape","--good","--willow","--water"].map(v=>cs.getPropertyValue(v).trim());
+  cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;
+  const ox=(x??innerWidth/2)*devicePixelRatio,oy=(y??innerHeight/3)*devicePixelRatio;
+  for(let i=0;i<n;i++)parts.push({x:ox,y:oy,vx:(Math.random()-.5)*14*devicePixelRatio,vy:(-Math.random()*12-3)*devicePixelRatio,r:Math.random()*6,s:(5+Math.random()*6)*devicePixelRatio,c:cols[i%cols.length],life:90+Math.random()*40});
+  if(!raf)loop();
+}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{p.vy+=.35*devicePixelRatio;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=.12;p.life--;
+    cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.beginPath();cx.ellipse(0,0,p.s,p.s/2.4,0,0,Math.PI*2);cx.fill();cx.restore()});
+  parts=parts.filter(p=>p.life>0&&p.y<cv.height+40);
+  raf=parts.length?requestAnimationFrame(loop):(cx.clearRect(0,0,cv.width,cv.height),null);
+}
+function shake(el){if(!el)return;el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
+function popScore(){const s=$("#scoreLabel");s.classList.add("pop");setTimeout(()=>s.classList.remove("pop"),220)}
+function right(el){S.streak++;S.best=Math.max(S.best,S.streak);sfx.good();popScore();if(el){const r=el.getBoundingClientRect();burst(S.streak>=3?40:18,r.left+r.width/2,r.top)}}
+function wrong(){S.streak=0;sfx.bad()}
+
+/* HUD */
+function header(){
+  $("#teamLabel").textContent=S.team?("فريق: "+S.team):"فريق التحقيق";
+  const p=points();$("#scoreLabel").textContent=(S.maxStep>=REVEAL?p.total:p.live)+" نقطة";
+  const st=$("#streak");st.hidden=S.streak<2;st.textContent="سلسلة ×"+S.streak;
+  $("#hintsLabel").textContent="تلميحات: "+S.hints;
+  $("#soundBtn").textContent=SOUND?"الصوت: يعمل":"الصوت: مغلق";
+  $("#steps").innerHTML=STEPS.map((n,i)=>`<button type="button" class="${i===S.step?"on":i<=S.maxStep?"done":""}" ${i>S.maxStep?"disabled":""} data-go="${i}">${n}</button>`).join("");
+}
+function go(i){if(i>=1&&!S.teamId&&typeof registerTeam==="function")registerTeam();S.step=i;S.maxStep=Math.max(S.maxStep,i);save();render();window.scrollTo({top:0,behavior:reduced?"auto":"smooth"})}
+function nav(nextLabel="التالي",nextDisabled=false,lockMsg=""){
+  return `<div class="nav">${S.step>0?`<button class="btn ghost" data-go="${S.step-1}">السابق</button>`:"<span></span>"}<button class="btn" data-go="${S.step+1}" ${nextDisabled?"disabled":""}>${nextLabel}</button></div>${nextDisabled&&lockMsg?`<p class="muted" style="text-align:left;font-size:.85rem">${lockMsg}</p>`:""}`;
+}
+function lifeline(key){return `<button class="lifeline" data-hint="${key}" ${S.hints<1||S.hinted[key]!=null?"disabled":""}>اسألوا حارس المتنزه (يحذف خيارًا خاطئًا)</button>`}
+
+/* drawings */
+function pin(n,x,y){return `<g class="pin"><circle cx="${x}" cy="${y}" r="15" fill="var(--tape)"/><text x="${x}" y="${y+6}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="17" fill="var(--tape-ink)">${n}</text></g>`}
+function huntSVG(){
+  const sp=(i,x,y,r,label)=>`<g class="spot ${S.found[i]?"found":""} ${S.hintSpot===i&&!S.found[i]?"hinted":""}" data-spot="${i}" role="button" tabindex="0" aria-label="${label}"><circle class="ring" cx="${x}" cy="${y}" r="${r}"/><circle class="hit" cx="${x}" cy="${y}" r="${r}"/>${pin(i+1,x+r*.72,y-r*.72)}</g>`;
+  const dc=(k,x,y,r)=>`<circle class="decoy" data-decoy="${k}" cx="${x}" cy="${y}" r="${r}" fill="transparent"/>`;
+  return `<svg viewBox="0 0 800 450" role="img" aria-label="رسم وادٍ فيه نهر وقطيع أيائل وشجيرات وسد مكسور وأيل منهك">
+  <rect width="800" height="450" fill="var(--sky)"/>
+  <g fill="var(--snow)" opacity=".85"><ellipse cx="160" cy="62" rx="44" ry="13"/><ellipse cx="190" cy="54" rx="30" ry="12"/></g>
+  <path d="M0 190L80 110 150 160 240 80 330 150 420 90 500 160 600 95 690 150 800 110V450H0z" fill="var(--hill3)" opacity=".55"/>
+  <path d="M240 80L262 102 250 100 240 112 228 100 218 102z M600 95L620 116 600 112 584 118z" fill="var(--snow)"/>
+  <path d="M0 230L120 180 240 215 380 175 500 210 640 180 800 205V450H0z" fill="var(--hill2)"/>
+  <path d="M0 275Q200 240 420 262T800 255V450H0z" fill="var(--hill1)"/>
+  <path d="M-10 350Q140 310 260 345T520 370 810 340" fill="none" stroke="var(--water)" stroke-width="26" stroke-linecap="round"/>
+  <g transform="translate(60 205)"><path d="M20 0L40 50H0z" fill="var(--willow)"/><path d="M20 22L44 80H-4z" fill="var(--willow)"/><rect x="17" y="78" width="6" height="16" fill="var(--soil)"/></g>
+  <g transform="translate(300 70)" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"><path d="M0 8Q10 0 20 8Q30 0 40 8"/></g>
+  <ellipse cx="330" cy="420" rx="30" ry="15" fill="var(--muted)"/>
+  <g stroke="var(--soil)" stroke-width="4" stroke-linecap="round">
+    <path d="M150 315v-16M150 305l-6-5M150 305l6-6"/><path d="M175 322v-12M175 314l-5-4"/><path d="M200 318v-18M200 306l6-6M200 310l-6-4"/><path d="M225 324v-10"/><path d="M130 328v-11M130 322l5-5"/>
+  </g>
+  <g fill="var(--willow)"><ellipse cx="650" cy="322" rx="22" ry="26"/><ellipse cx="682" cy="314" rx="26" ry="32"/><ellipse cx="716" cy="320" rx="22" ry="27"/><ellipse cx="744" cy="316" rx="18" ry="24"/></g>
+  <g color="var(--ink)">
+    <use href="#s-elk" x="470" y="212" width="44" height="34"/><use href="#s-elk" x="510" y="222" width="40" height="31"/><use href="#s-elk" x="548" y="208" width="44" height="34"/>
+    <use href="#s-elk" x="492" y="240" width="40" height="31"/><use href="#s-elk" x="536" y="242" width="44" height="34"/><use href="#s-elk" x="580" y="232" width="38" height="29"/>
+  </g>
+  <g stroke="var(--soil)" stroke-width="6" stroke-linecap="round"><path d="M385 337l22 22M400 333l8 30M418 340l-6 26"/><path d="M440 338l14 24M460 346l-4 22"/></g>
+  <g fill="var(--ink)" opacity=".75"><ellipse cx="110" cy="410" rx="30" ry="10"/><path d="M84 406q-14 2-18 10l6 2q6-6 14-6z"/><path d="M128 402l4-6M134 404l5-5" stroke="var(--ink)" stroke-width="2"/></g>
+  ${dc("cloud",175,58,40)}${dc("raven",320,78,28)}${dc("pine",80,255,40)}${dc("rock",330,420,30)}
+  ${sp(0,180,312,52,"شجيرات مقضومة على ضفة النهر")}${sp(1,695,318,58,"ضفة كثيفة الشجيرات")}${sp(2,425,352,46,"عيدان مكسورة في النهر")}${sp(3,535,235,62,"قطيع أيائل")}${sp(4,105,408,38,"أيل منهك ممدد على الأرض")}
+  </svg>`;
+}
+function riverSVG(after){
+  const w=after?`<g fill="var(--willow)">${[60,110,170,250,330,410,470,540,620,690].map((x,i)=>`<ellipse cx="${x}" cy="${i%2?150:205}" rx="${26+(i%3)*6}" ry="${30+(i%2)*8}"/><rect x="${x-2}" y="${i%2?170:225}" width="4" height="16" fill="var(--soil)"/>`).join("")}</g>`
+   :`<g fill="var(--soil)">${[60,110,170,250,330,410,470,540,620,690].map((x,i)=>`<rect x="${x}" y="${i%2?165:215}" width="4" height="${8+(i%3)*3}"/>`).join("")}</g>`;
+  const river=after?`<path d="M0 195Q200 170 400 190T800 185" fill="none" stroke="var(--water)" stroke-width="22"/><ellipse cx="420" cy="190" rx="90" ry="22" fill="var(--water)"/><path d="M500 172v36" stroke="var(--soil)" stroke-width="8"/>`
+   :`<path d="M0 195Q200 170 400 190T800 185" fill="none" stroke="var(--water)" stroke-width="60" opacity=".45"/><path d="M0 195Q200 175 400 192T800 185" fill="none" stroke="var(--water)" stroke-width="8"/>`;
+  return `<svg viewBox="0 0 800 300" aria-hidden="true"><rect width="800" height="300" fill="var(--sky)"/><path d="M0 120L150 70 300 110 470 60 640 100 800 75V300H0z" fill="var(--hill2)"/><rect y="140" width="800" height="160" fill="var(--hill1)"/>${river}${w}</svg>`;
+}
+
+function qCard(key,e,k,arr,pts,tag="دليل"){
+  const ans=arr[k],d=ans!==null,h=S.hinted[key];
+  return `<div class="card q" id="${key}"><div class="ev-head"><span class="ev-num">${tag} ${k+1}</span><h3>${e.t}</h3></div>
+   <div class="obs"><p><b>الملاحظة:</b> ${e.obs}</p>${e.exp?`<p><b>التفسير المحتمل:</b> ${e.exp}</p>`:""}</div>${e.img?gal(e.img):""}
+   <p><b>${e.q}</b> <span class="muted mono">· ${pts} نقاط</span></p><div class="opts">${e.o.map((o,i)=>`<button class="opt ${d?(i===e.a?"right":i===ans?"wrong":""):""} ${!d&&h===i?"struck":""}" data-q="${key}:${i}" ${d||h===i?"disabled":""}>${o}</button>`).join("")}</div>
+   ${d?`<p class="fb">${e.fb}</p>`:lifeline(key)}</div>`;
+}
+
+const scenes=[
+ /* 0 start */
+ ()=>`<section class="scene">
+   <span class="tape">ملف قضية · YNP-NR · سرّي</span>
+   <div class="hero-photo"><img src="media/hero-elk-snow.jpg" alt="ذكور أيائل تقف صفًا على أرض مكسوة بالثلج"><div class="ov"><h1>سر اختلال التوازن البيئي في يلوستون</h1><p>اعثروا على عامل المكافحة المناسب</p></div></div>
+   <p class="muted" style="font-size:.85rem">القضية تستخدم أحداثًا وبيانات حقيقية من يلوستون، أما طريقة عرض المرشحين والتصويت فهي محاكاة تعليمية.</p>
+   <div class="card q"><label for="team"><b>اسم فريقكم</b></label><input type="text" id="team" placeholder="مثلًا: فريق الصفصاف" value="${esc(S.team)}" maxlength="40" ${S.teamId?"disabled":""}>${S.teamId?`<span class="muted" style="font-size:.85rem">فريقكم مسجّل في ترتيب الفرق.</span>`:`<span class="muted" style="font-size:.85rem">اكتبوا اسم فريقكم ليظهر في ترتيب الفرق.</span>`}</div>
+   <ul class="rounds"><li><b>1</b>القصة والمهمة</li><li><b>2</b>دراسة الأيائل</li><li><b>3</b>5 أدلة مخفية في الوادي</li><li><b>4</b>استجواب 6 مرشحين</li><li><b>5</b>القرار والكشف</li></ul>
+   <p class="muted">فريق من 3 إلى 5 على جهاز واحد · 100 نقطة · 3 تلميحات من حارس المتنزه · قرابة 30 دقيقة</p>
+   <div class="nav"><button class="btn ghost" type="button" data-arena>ترتيب الفرق</button><button class="btn big" data-go="1" id="startBtn" ${S.team?"":"disabled"}>ابدأوا التحقيق</button></div>
+   <details class="guide"><summary>دليل الميسّرة</summary>
+   <ol><li>قسّمي الحضور فرقًا من 3 إلى 5، وكل فريق يفتح الرابط على جهاز واحد (اعرضي رمز QR للرابط على الشاشة).</li>
+   <li>القصة والمهمة: 5 دقائق، قراءة جماعية بصوت مرتفع.</li><li>دراسة الأيائل: 6 دقائق، وتنتهي بأسئلة سريعة.</li>
+   <li>مسرح الأدلة: 8 دقائق. لا ضغط قبل اتفاق الفريق.</li><li>الاستجواب: 8 دقائق، وعضو من الفريق يقرأ إفادة كل مرشح بصوته.</li>
+   <li>القرار: دقيقتان، ثم يعرض كل فريق جملة الدفاع في دقيقة.</li>
+   <li>تضغط الفرق «اكشفوا الحل» معًا، ثم افتحي «ترتيب الفرق» على الشاشة واختاري «حفل التتويج» لكشف المراكز. النتائج تُسجَّل تلقائيًا. الرتب: كبير علماء يلوستون (90+)، خبير نظم بيئية (75+)، حارس ميداني (50+)، محقق متدرب.</li></ol>
+   <p class="muted" style="margin-top:6px">زر «لعبة جديدة» في المرحلة الأخيرة يبدأ فريقًا جديدًا على الجهاز نفسه، ونتيجة الفريق السابق تبقى محفوظة في الترتيب.</p></details>
+ </section>`,
+
+ /* 1 story */
+ ()=>`<section class="scene">
+   <span class="tape">المستند 01 · القصة</span><h2>كيف بدأت القضية؟</h2>
+   ${vid("story.mp4","story-poster.jpg","شاهدوا القصة أولًا، ثم اقرأوا الملخص تحتها")}
+   <div class="chapter"><span class="num">الفصل الأول · بدايات القرن العشرين</span><h3>حرب على المفترسات</h3>
+   <ul class="list">
+    <li><b>المشكلة كما رآها الناس:</b> المفترسات الكبيرة تهدد الماشية والحيوانات المرغوبة للصيد.</li>
+    <li><b>الحل الذي اختاروه:</b> حملات منظمة للقضاء عليها بالتسميم والصيد.</li>
+    <li><b>النتيجة:</b> بحلول منتصف القرن، اختفى أحد المفترسات المحلية المهمة تقريبًا من يلوستون.</li>
+   </ul>
+   <p class="muted" style="font-size:.9rem">أي مفترس هو؟ هذا جزء من التحقيق.</p></div>
+   <div class="chapter"><span class="num">الفصل الثاني · الأيائل تتكاثر</span><h3>قطيع بلا من يوقفه</h3>
+   <ul class="list">
+    <li>مع غياب ذلك المفترس، تراجع أحد أهم أسباب النفوق الطبيعي للأيائل.</li>
+    <li>خفضت إدارة المتنزه أعدادها مباشرة لعقود، ثم توقفت في الستينيات.</li>
+    <li>ارتفع العدد حتى سُجّل رقم قياسي: <b>19,045 أيلًا</b> في إحصاء يناير 1994.</li>
+   </ul></div>
+   <div class="chapter"><span class="num">الفصل الثالث · الأيائل والبشر</span><h3>المشكلة تعبر الحدود</h3>
+   ${vid("elk-town.mp4","town-4.jpg","أيائل تعبر شارعًا مزدحمًا والناس يتفرجون (مدينة إستس بارك، كولورادو)")}
+   <ul class="list">
+    <li>أغلب قطيع الشمال يهاجر شتاءً خارج المتنزه، إلى الغابات والأراضي الخاصة.</li>
+    <li>هناك ينافس الماشية على المراعي، ويهم عدده الصيادين ومربي الماشية.</li>
+    <li>من 1976 إلى 2010 فتحت ولاية مونتانا موسم صيد خارج المتنزه لخفض أعداد الإناث.</li>
+   </ul></div>
+   <div class="chapter"><span class="num">الفصل الرابع · النبات والأنهار</span><h3>ضفاف بلا ظل</h3>
+   ${gal([["valley-river.jpg","وادٍ ونهر في شمال يلوستون"],["willow-river.jpg","صفصاف كثيف على ضفة نهر: هذا ما كان يتراجع"]])}
+   <ul class="list">
+    <li>الأيائل تأكل براعم الصفصاف والحور قبل أن تكبر.</li>
+    <li>بلا شجيرات، تفقد الضفاف تماسكها وظلها، ويفقد النهر موائله.</li>
+    <li>القنادس تحتاج الصفصاف، فتراجعت مستعمراتها، وقلّت السدود التي ترفع منسوب الماء.</li>
+   </ul></div>
+   <div class="note"><b>لكن انتبهوا:</b> الأيائل ليست السبب الوحيد. الطقس والثلوج والجفاف والغذاء والصيد كلها عوامل مؤثرة.</div>
+   ${nav("إلى المهمة")}</section>`,
+
+ /* 2 mission */
+ ()=>`<section class="scene">
+   <span class="tape">المستند 02 · التكليف</span><h2>مهمتكم</h2>
+   <div class="card"><p class="lead">أنت الآن ضمن فريق استشاري طُلب منه تحليل مشكلة بيئية في شمال متنزه يلوستون الوطني، أعداد كبيرة من الأيائل أثرت في الغطاء النباتي والمناطق النهرية. أمام فريقكم الآن عدة احتمالات: استعادة مفترس محلي، أو الاعتماد على مفترسات موجودة بالفعل، أو تعزيز الموائل النهرية، أو اختيار تدخل آخر يبدو قادرًا على خفض أعداد الأيائل.</p>
+   <p style="margin-top:10px">قد ينجح التدخل في خفض أعداد الأيائل، لكنه يضر بأنواع أخرى. وقد يعيد نباتًا متراجعًا إلى النمو، لكنه لا يعالج سبب تراجعه. وقد يبدو كائن ما مفيدًا لأنه يحسن الأنهار، مع أنه يعتمد أصلًا على وجود النباتات التي تحاولون استعادتها.</p>
+   <p style="margin-top:10px"><b>مهمتكم الآن ليست اختيار الكائن الأكثر شراسة أو الأكثر قدرة على قتل الأيائل، بل اختيار التدخل الذي يحقق أفضل توازن بين الهدف، والآلية، والمخاطر، وملاءمة النظام البيئي، وقوة الأدلة.</b></p></div>
+   <h3>قواعد التحقيق</h3><p>قبل اعتماد أي مرشح، يجب تقييم:</p>
+   <ul class="criteria">${CRITERIA.map(c=>`<li><b>${c[0]}</b>${c[1]}</li>`).join("")}</ul>
+   ${nav("إلى دراسة الأيائل")}</section>`,
+
+ /* 3 elk study */
+ ()=>{const done=Object.keys(S.tf).length===TF.length&&Object.keys(S.match).length===MATCH.length;return `<section class="scene">
+   <span class="tape">المستند 03 · الكائن المستهدف</span><h2>دراسة الأيائل في شمال يلوستون</h2>
+   <h3>1. بطاقة التعريف</h3>
+   <div class="portrait"><img src="media/elk-bull.jpg" alt="ذكر أيل بقرون كبيرة على سفح جبلي"><div class="tablewrap"><table class="facttable"><tbody>
+    <tr><th>الاسم الشائع</th><td>الأيل الأمريكي أو الأيل الأحمر الأمريكي (Elk)</td></tr>
+    <tr><th>الاسم العلمي</th><td><i>Cervus canadensis</i></td></tr>
+    <tr><th>نوع الكائن</th><td>ثديي عاشب، من فصيلة الأيليات</td></tr>
+    <tr><th>الحالة في المنطقة</th><td>نوع محلي أصيل؛ قطيع شمال يلوستون كان موجودًا بأعداد كبيرة</td></tr>
+    <tr><th>الحجم</th><td>الذكر قرابة 320 كغ وارتفاعه نحو 1.5 م عند الكتف، والأنثى قرابة 230 كغ، والعجل نحو 14 كغ عند الولادة</td></tr>
+    <tr><th>الموطن</th><td>الوديان والمروج والغابات المفتوحة والمناطق القريبة من الأنهار</td></tr>
+    <tr><th>الغذاء</th><td>الأعشاب والنباتات العشبية وأوراق الشجيرات والأغصان والبراعم، بحسب الموسم وتوافر الغذاء</td></tr>
+    <tr><th>التكاثر</th><td>عجل واحد غالبًا، يولد بين مايو وأواخر يونيو</td></tr>
+    <tr><th>السلوك الاجتماعي</th><td>تعيش غالبًا في مجموعات؛ ويتغير حجم المجموعة وتركيبها بحسب الموسم والجنس والظروف البيئية</td></tr>
+    <tr><th>وسيلة الدفاع</th><td>اليقظة، والهرب، والتجمع، واستخدام الحجم والقوة والقرون عند الضرورة</td></tr>
+   </tbody></table></div></div>
+   <h3>2. ما الذي يجعل الأيائل صعبة الإدارة؟</h3>
+   ${vid("elk-herd-road.mp4","herd-9.jpg","قطيع أيائل يتنقل بين الشوارع والمروج: الحركة لمسافات طويلة من أهم نقاط قوتها (إستس بارك، كولورادو)")}
+   <div class="split">
+    <div class="sw plus card"><h4>قوتها</h4><ul class="list">
+     <li>تستطيع التحرك لمسافات طويلة، وقد تنتقل موسميًا بين المتنزه والأراضي المحيطة.</li>
+     <li>تستفيد من مجموعة متنوعة من النباتات، فلا تعتمد على مصدر غذاء واحد طوال العام.</li>
+     <li>تعيش في مجموعات، ما يزيد عدد العيون التي تراقب الخطر.</li>
+     <li>تستطيع الإناث البالغة المساهمة في استمرار القطيع عبر التكاثر عندما تكون الظروف مناسبة.</li></ul></div>
+    <div class="sw minus card"><h4>نقاط ضعفها</h4><ul class="list">
+     <li>تتأثر بعمق الثلوج وشدة الشتاء وتوافر الغذاء.</li>
+     <li>العجول أكثر عرضة للافتراس من الأفراد البالغة.</li>
+     <li>تحتاج الإناث إلى موارد كافية خلال الحمل والرضاعة، فتؤثر ظروف الغذاء في بقاء الصغار وحالة الأمهات.</li>
+     <li>قد يؤدي الضغط المتكرر من المفترسات أو البشر إلى تغيير أماكن الرعي وحركة القطيع، ويختلف مقدار ذلك باختلاف المكان والظروف.</li></ul></div>
+   </div>
+   <div class="split">
+    ${vid("moose-snow.mp4","snow-0.jpg","<span class='tagline'>للمقارنة</span>موظ في ثلج عميق، وهو من فصيلة الأيليات نفسها. الثلج يحدّ من الحركة والغذاء")}
+    ${vid("moose-calf.mp4","calf-0.jpg","<span class='tagline'>للمقارنة</span>أنثى موظ مع صغيرها يواجهان حيوانًا يقترب منهما. الصغار هي الحلقة الأضعف")}
+   </div>
+   <h3>3. كيف تصطاد الأيائل؟ ومن يصطادها؟</h3>
+   <p>الأيائل حيوانات عاشبة، لذا فهي لا تصطاد فرائس؛ بل تتجنب المفترسات وتستخدم الحركة الجماعية والهرب. أما المفترسات التي تفترسها فتختلف في طريقة الصيد:</p>
+   <div class="grid2">
+    <div class="ptype">${ico("g-ambush")}<div><b>تعتمد على الكمائن</b><p>تقترب خفية ثم تنقض على فرد مناسب، ويرتبط اختيار الفريسة بالمكان والغطاء النباتي وعمر الفريسة وحالتها.</p></div></div>
+    <div class="ptype">${ico("g-chase")}<div><b>تطارد الفريسة</b><p>تعتمد على التحمل والتنسيق وملاحقة الأفراد الأبطأ أو الأكثر عرضة للانفصال عن المجموعة.</p></div></div>
+    <div class="ptype">${ico("g-small")}<div><b>أصغر حجمًا أو انتهازية</b><p>تركز على العجول أو الجيف، ووجودها لا يعني بالضرورة قدرتها على التأثير في نمو القطيع البالغ.</p></div></div>
+   </div>
+   ${vid("moose-cyclist.mp4","cyc-1.jpg","<span class='tagline'>للمقارنة</span>موظ يندفع نحو درّاج. الأيليات الكبيرة تدافع بحجمها وقوتها (لم يُصب أحد)")}
+   <div class="note">ولهذا، فإن <b>عدد عمليات القتل وحده ليس مقياسًا كافيًا</b>. يجب معرفة الفئات العمرية التي تتعرض للافتراس، وعدد الأفراد التي يمكن للمفترس الوصول إليها، ومدى تكرار ذلك، وتأثيره في بقاء القطيع على المدى الطويل.</div>
+   <h3>اختبروا معلوماتكم: صح أو خطأ؟ <span class="muted mono">· نقطتان لكل جملة</span></h3>
+   <div class="tf">${TF.map((t,i)=>{const a=S.tf[i];const d=a!==undefined;return `<div class="tfrow ${d?(a===t[1]?"right":"wrong"):""}" id="tf${i}"><p>${t[0]}</p><div class="tfbtns">${d?`<b>${t[1]?"صح":"خطأ"}</b>`:`<button data-tf="${i}:1">صح</button><button data-tf="${i}:0">خطأ</button>`}</div>${d?`<p class="why">${t[2]}</p>`:""}</div>`}).join("")}</div>
+   <h3>طابقوا كل مشتبه بطريقة صيده <span class="muted mono">· نقطة لكل واحد</span></h3>
+   <div class="match">${MATCH.map((m,i)=>{const a=S.match[i];const d=a!==undefined;return `<div class="mrow ${d?(a===m.a?"right":"wrong"):""}" id="mt${i}">${m.img?`<img src="media/${m.img}" alt="">`:ico(m.sym)}<div><b>${m.n}</b><div class="mopts">${PTYPES.map(p=>`<button data-match="${i}:${p[0]}" class="${d?(p[0]===m.a?"right":p[0]===a?"wrong":""):""}" ${d?"disabled":""}>${p[1]}</button>`).join("")}</div></div></div>`}).join("")}</div>
+   ${nav("إلى مسرح الأدلة",!done,"أجيبوا عن كل الأسئلة لتكملوا")}</section>`},
+
+ /* 4 evidence */
+ ()=>{const f=S.found.filter(Boolean).length,all=S.ev.every(x=>x!==null);return `<section class="scene">
+   <span class="tape">المستند 04 · مسرح الأدلة</span><h2>5 أدلة مخفية في الوادي</h2>
+   <p>ابحثوا في الرسمة واضغطوا على أي شيء يبدو لكم غريبًا. كل دليل تجدونه يفتح سؤالًا مع صور من الميدان. <span class="muted mono">· 6 نقاط لكل سؤال</span></p>
+   <div class="huntbar"><span class="found">${f} / 5</span><button class="lifeline" data-hint="spot" ${S.hints<1||f===5||S.hintSpot!=null&&!S.found[S.hintSpot]?"disabled":""}>تلميح: أين نبحث؟</button></div>
+   <div class="hunt" id="hunt">${huntSVG()}</div>
+   <p class="toast" id="toast" aria-live="polite"></p>
+   ${EVIDENCE.map((e,k)=>S.found[k]?qCard("ev"+k,e,k,S.ev,6):"").join("")}
+   ${nav("إلى غرفة الاستجواب",!all,"اعثروا على الأدلة الخمسة وأجيبوا عن أسئلتها")}</section>`},
+
+ /* 6 suspects */
+ ()=>{const n=Object.keys(S.v).length;return `<section class="scene">
+   <span class="tape">المستند 06 · ملفات المرشحين</span><h2>ستة مرشحين ينتظرون الاستجواب</h2>
+   <p>افتحوا ملف كل مرشح، واقرأوه على قواعد التحقيق السبع. ثم صنّفوه: <b>تدخل رئيسي</b>، أو <b>داعم</b>، أو <b>مستبعد</b>. <span class="muted">(4 نقاط لكل تصنيف صحيح، تُكشف في النهاية)</span></p>
+   <div class="note" style="font-size:.85rem"><b>ملاحظة زمنية:</b> الأرقام مرتبطة بالفترة التي تتوفر لها تقديرات موثوقة. وإذا لم يتوفر رقم دقيق لعام 1994 فهذا مذكور صراحة.</div>
+   <div class="suspects">${SUSPECTS.map(s=>{const v=S.v[s.id];return `<button class="sus" data-sus="${s.id}"><span class="num">${s.L}</span><img class="sphoto" src="media/${s.img[0]}" alt="" loading="lazy"><span class="nm">${s.n}</span><span class="tag">${s.tag}</span><span class="chip ${v?({main:"fit",support:"maybe",out:"out"})[v]:"none"}">${v?VERD[v]:"لم يُستجوب"}</span></button>`}).join("")}</div>
+   <p class="muted">استجوبتم ${n} من 6</p>
+   ${nav("إلى غرفة القرار",n<SUSPECTS.length,"صنّفوا المرشحين الستة")}</section>`},
+
+ /* 7 decision */
+ ()=>`<section class="scene">
+   <span class="tape">غرفة القرار</span><h2>أي تدخل ترفعونه لإدارة المتنزه؟</h2>
+   <p>تدخل رئيسي واحد فقط. تذكروا: أفضل توازن، لا أقوى مفترس. <span class="muted mono">· 30 نقطة</span></p>
+   <div class="pick">${SUSPECTS.map(s=>`<button data-final="${s.id}" aria-pressed="${S.final===s.id}"><img src="media/${s.img[0]}" alt="" loading="lazy">${s.n}</button>`).join("")}</div>
+   <div class="card"><h3>جهزوا جملة الدفاع عن قراركم</h3><p class="muted">«اخترنا ___ لأن آليته ___، ويؤثر في ___، ومخاطره ___، ويمكن مراقبته عن طريق ___.»</p></div>
+   <div class="nav"><button class="btn ghost" data-go="${S.step-1}">السابق</button><button class="btn big" id="revealBtn" ${S.final?"":"disabled"}>اكشفوا الحل</button></div>
+   ${S.final?"":`<p class="muted" style="text-align:left;font-size:.85rem">اختاروا تدخلًا واحدًا</p>`}</section>`,
+
+ /* 9 reveal */
+ ()=>{const p=points();const ch=SUSPECTS.find(s=>s.id===S.final);const rank=RANKS.find(r=>p.total>=r[0])[1];const win=S.final==="wolf";return `<section class="scene">
+   <span class="stamp ${win?"win":""}">${win?"القضية محلولة":"قرار مختلف عن الواقع"}</span>
+   <h2>ما حدث فعلًا: إعادة توطين الذئب الرمادي</h2>
+   <p class="lead">اخترتم: <b>${ch?ch.n:"—"}</b>. ${win?"وهو القرار نفسه الذي اتخذته الجهات المختصة.":"الجهات المختصة اختارت إعادة المفترس المحلي المفقود."}</p>
+   <div class="card"><div class="scorebig" id="bigScore">0</div><p class="muted" style="text-align:center">من 100 · ${esc(S.team||"فريق التحقيق")}</p>
+   <div class="rank" style="margin-top:12px">${ico("badge")}<div><div class="muted" style="font-size:.85rem">رتبة الفريق</div><div class="t">${rank}</div><div class="muted" style="font-size:.85rem">أطول سلسلة إجابات صحيحة: ${S.best}</div></div></div>
+   <div class="breakdown" style="margin-top:14px"><span>صح أو خطأ</span><span>${p.tf}/10</span><span>طرق الصيد</span><span>${p.mt}/6</span><span>مسرح الأدلة</span><span>${p.ev}/30</span><span>تصنيف المرشحين</span><span>${p.cls}/24</span><span>القرار النهائي</span><span>${p.fin}/30</span></div></div>
+   <h3>الخط الزمني</h3>
+   <ol class="timeline">
+    <li><span class="yr">1926</span><br>لم يبقَ في يلوستون أي قطيع ذئاب معروف بعد حملات مكافحة المفترسات.</li>
+    <li><span class="yr">يناير 1994</span><br>رقم قياسي في إحصاء الأيائل: 19,045. وفي ديسمبر من العام نفسه، قبل خروج الذئاب، نقص العدّ 2,254 أيلًا.</li>
+    <li><span class="yr">يناير 1995</span><br>وصول أول دفعة: 14 ذئبًا من كندا.</li>
+    <li><span class="yr">يناير 1996</span><br>17 ذئبًا آخر من كندا، فصار مجموع الذئاب المنقولة من كندا 31.</li>
+    <li><span class="yr">1997</span><br>10 ذئاب من شمال غرب مونتانا، ووُضعت لكل الذئاب أطواق لاسلكية لمراقبتها.</li>
+    <li><span class="yr">2003–2006</span><br>دراسة تتبعت عجول الأيائل: الدببة سببت 58–60% من نفوقها، والذئاب 14–17%.</li>
+    <li><span class="yr">1996–2009</span><br>مستعمرات القنادس في منطقة الدراسة نفسها زادت من مستعمرة واحدة إلى 12.</li>
+   </ol>
+   <div class="card" style="background:var(--card2)"><b>تذكرون الطائر في الوادي؟</b><p>الذئاب تترك بقايا فرائسها، فتستفيد منها الغربان والعقعق والنسور والدببة. هذا أثر غير مستهدف، لكنه إيجابي.</p>${gal([["wolf-carcass.jpg","ذئب عند بقايا فريسة، وطيور العقعق تأكل منها"]])}</div>
+   <h3>قبل وبعد</h3>
+   <div class="ba" id="ba" style="--pos:50%"><img src="media/ba-before.jpg" alt="وادٍ بشجيرات قليلة قبل التعافي"><div class="after"><img src="media/ba-after.jpg" alt="الوادي نفسه وقد امتلأ بالصفصاف"></div><div class="divider"></div><span class="lbl r">قبل</span><span class="lbl l">بعد</span></div>
+   <label for="baR" class="muted" style="font-size:.85rem">حرّكوا المؤشر للمقارنة: الموقع نفسه قبل عودة الصفصاف وبعدها</label><input type="range" id="baR" min="0" max="100" value="50">
+   <h3>ماذا سيحدث إذا اخترت كل مسار؟</h3>
+   <p class="muted" style="font-size:.9rem">نميّز هنا بين ما حدث فعلًا في يلوستون، وما كان يمكن توقعه لو اختير مسار آخر. توقعات المسارات البديلة احتمالات علمية، وليست أحداثًا وقعت.</p>
+   <div class="paths">${SUSPECTS.map(s=>{const P=PATHS[s.id];return `<details ${s.id===S.final?"open":""}><summary><img src="media/${s.img[0]}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:none"><span>المسار ${s.L}: ${s.n}</span>${P.real?`<span class="real">حدث فعلًا</span>`:`<span class="what">احتمال</span>`}</summary>
+     <h4>${P.real?"ما الذي حدث فعلًا؟":"ما الذي كان يمكن أن يحدث؟"}</h4><p>${P.what}</p>
+     <h4>${P.real?"لماذا اختير هذا المسار؟":(s.id==="cwd"?"لماذا لم يكن خيارًا مقبولًا؟":"لماذا لم يكن هو التدخل الرئيسي؟")}</h4><p>${P.why}</p>
+     <p style="margin-top:6px">تصنيفكم: <b>${S.v[s.id]?VERD[S.v[s.id]]:"—"}</b> · التصنيف المتوقع: <b>${s.ok.map(x=>VERD[x]).join(" أو ")}</b> ${S.v[s.id]&&s.ok.includes(S.v[s.id])?"✓":""}</p>
+     </details>`}).join("")}</div>
+   <div class="closing"><h3>الرسالة الأخيرة</h3>
+   ${vid("final.mp4","final-poster.jpg","فيديو الختام")}
+</div>
+   <div class="card" style="text-align:center;display:grid;gap:10px;justify-items:center"><b>نتيجة فريقكم: ${p.total} من 100</b><p class="muted">حُفظت نتيجتكم تلقائيًا. شاهدوا مركزكم بين الفرق.</p><button class="btn" type="button" data-arena>اعرضوا ترتيب الفرق</button></div>
+   <h3>المصادر</h3>
+   <ul class="sources">
+    <li>${ext("elk","إدارة المتنزهات الأمريكية: الأيائل في يلوستون")}</li>
+    <li>${ext("elkys","مجلة Yellowstone Science: فهم ديناميكيات أيائل الشمال بعد عودة الذئاب")}</li>
+    <li>${ext("wolfrep","تقرير مشروع ذئاب يلوستون 1995–1996")}</li>
+    <li>${ext("cougar","إدارة المتنزهات الأمريكية: الكوغر")}</li>
+    <li>${ext("beaver","إدارة المتنزهات الأمريكية: القنادس")}</li>
+    <li>${ext("calves","هيئة المسح الجيولوجي الأمريكية: نفوق عجول الأيائل")}</li>
+    <li>${ext("willow","مؤسسة العلوم الأمريكية: الصفصاف في شمال يلوستون")}</li>
+    <li>${ext("cwd","مراكز مكافحة الأمراض الأمريكية: مرض الهزال المزمن")}</li>
+   </ul>
+   <div class="nav"><button class="btn ghost" data-go="${S.step-1}">السابق</button><button class="btn" id="reset">لعبة جديدة</button></div>
+   <p class="muted" id="resetConfirm" hidden>متأكدون؟ هذا يمسح نقاط الفريق من هذا الجهاز. <button class="btn" id="resetYes" style="padding:6px 14px">امسح وابدأ</button></p>
+ </section>`}
+];
+
+let BOARD=[];
+try{BOARD=JSON.parse(localStorage.getItem("ys-board")||"[]")}catch(e){BOARD=[]}
+function saveBoard(){try{localStorage.setItem("ys-board",JSON.stringify(BOARD))}catch(e){}}
+function boardRows(){
+  if(!BOARD.length)return `<p class="muted">لا توجد نتائج بعد. أضيفوا أول فريق من الحقول أعلاه.</p>`;
+  return [...BOARD].map((b,i)=>({...b,i})).sort((a,b)=>b.score-a.score).map((b,r)=>`<div class="brow ${r===0?"top1":""}"><span class="rk">${r+1}</span><span class="nm">${esc(b.name)}</span><span class="sc">${b.score}</span><button class="del" data-bdel="${b.i}" aria-label="حذف ${esc(b.name)}">✕</button><span class="bar"><i style="width:${Math.max(0,Math.min(100,b.score))}%"></i></span></div>`).join("");
+}
+function boardHTML(withMine){
+  return `<div class="board" id="board">
+   <p class="muted" style="font-size:.9rem">تُحفظ على هذا الجهاز فقط. افتحوها على جهاز الميسّرة المعروض على الشاشة، وأدخلوا نتيجة كل فريق.</p>
+   ${withMine?`<button class="btn ghost" type="button" data-bmine>أضيفوا نتيجة فريقكم (${points().total}) لهذا الجهاز</button>`:""}
+   <form id="bform"><input type="text" id="bName" placeholder="اسم الفريق" maxlength="40" required><input type="number" id="bScore" placeholder="النقاط" min="0" max="100" required><button class="btn" type="submit">أضيفوا</button></form>
+   <div id="bList" style="display:grid;gap:8px">${boardRows()}</div></div>`;
+}
+function refreshBoard(){const l=$("#bList");if(l)l.innerHTML=boardRows()}
+document.addEventListener("submit",e=>{if(e.target.id!=="bform")return;e.preventDefault();const n=$("#bName").value.trim(),sc=parseInt($("#bScore").value,10);if(!n||isNaN(sc))return;BOARD.push({name:n,score:Math.max(0,Math.min(100,sc))});saveBoard();e.target.reset();refreshBoard();sfx.good()});
+function openBoard(){$("#dlgBody").innerHTML=`<div class="dlg-head"><h3>لوحة نتائج الفرق</h3><button class="x" id="dlgX" aria-label="إغلاق">✕</button></div>${boardHTML(false)}`;const d=$("#dlg");if(!d.open)d.showModal()}
+function openSus(id){
+  const s=SUSPECTS.find(x=>x.id===id);const v=S.v[id];
+  $("#dlgBody").innerHTML=`<div class="dlg-head"><img src="media/${s.img[0]}" alt=""><div><span class="mono muted">المرشح ${s.L}</span><h3>${s.n}</h3><div class="sci">${s.s}</div></div><button class="x" id="dlgX" aria-label="إغلاق">✕</button></div>
+  ${gal(s.img.map(f=>[f,""]))}
+  <div class="tablewrap"><table class="facttable"><tbody>${s.f.map(f=>`<tr><th>${f[0]}</th><td>${f[1]}</td></tr>`).join("")}</tbody></table></div>
+  <p><b>حكم الفريق</b></p>
+  <div class="verdict">${Object.keys(VERD).map(k=>`<button class="${({main:"fit",support:"maybe",out:"out"})[k]}" data-verd="${id}:${k}" aria-pressed="${v===k}">${VERD[k]}</button>`).join("")}</div>`;
+  const d=$("#dlg");if(!d.open)d.showModal();sfx.tick();
+}
+function countUp(){
+  const el=$("#bigScore");if(!el)return;const tgt=points().total;
+  if(reduced){el.textContent=tgt;return}
+  const st=performance.now();
+  (function f(t){const n=Math.min(tgt,Math.round(tgt*Math.min(1,(t-st)/1400)));el.textContent=n;if(n<tgt)requestAnimationFrame(f)})(st);
+}
+function reveal(){
+  const ov=$("#count"),n=$("#countN");ov.hidden=false;let c=3;n.textContent=c;sfx.tick();
+  const iv=setInterval(()=>{c--;if(c>0){n.textContent=c;n.style.animation="none";void n.offsetWidth;n.style.animation="";sfx.tick()}else{clearInterval(iv);ov.hidden=true;go(REVEAL);
+    if(S.final==="wolf"){sfx.win();burst(160);setTimeout(()=>burst(100,innerWidth*.2,innerHeight*.3),350);setTimeout(()=>burst(100,innerWidth*.8,innerHeight*.3),650)}else sfx.meh()}},800);
+}
+let io=null;
+function loadVid(v){
+  if(v._loading)return v._loading;
+  const url=v.dataset.src;
+  v.addEventListener("error",()=>{if(!v.dataset.fb){v.dataset.fb="1";v.src=url;v.play().catch(()=>{})}});
+  v.addEventListener("playing",()=>{const b=v.parentElement.querySelector("[data-play]");if(b)b.hidden=true});
+  v._loading=fetch(url).then(r=>{if(!r.ok)throw new Error(r.status);return r.blob()})
+    .then(b=>{v.src=URL.createObjectURL(new Blob([b],{type:"video/mp4"}))})
+    .catch(()=>{v.dataset.fb="1";v.src=url});
+  return v._loading;
+}
+function playVid(v){loadVid(v).then(()=>{v.muted=true;const pr=v.play();if(pr)pr.catch(()=>{const b=v.parentElement.querySelector("[data-play]");if(b)b.hidden=false})})}
+function wireVideos(){
+  if(io)io.disconnect();
+  const vids=[...document.querySelectorAll("video[data-src]")];
+  vids.forEach(v=>v.addEventListener("play",()=>{if(!v.src)playVid(v)}));
+  if(reduced||!("IntersectionObserver" in window))return;
+  io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting)playVid(v);else if(v.src)v.pause()}),{threshold:.5});
+  vids.forEach(v=>io.observe(v));
+}
+function render(){
+  header();
+  $("#app").innerHTML=scenes[S.step]();
+  const r=$("#baR");if(r)r.addEventListener("input",e=>$("#ba").style.setProperty("--pos",(100-e.target.value)+"%"));
+  const t=$("#team");if(t)t.addEventListener("input",e=>{S.team=e.target.value.trim();save();header();const sb=$("#startBtn");if(sb)sb.disabled=!S.team});
+  wireVideos();
+  if(S.step===REVEAL)countUp();
+}
+function say(msg){const t=$("#toast");if(t)t.textContent=msg}
+function answerQ(key,i){
+  const k=+key.slice(2),arr=S.ev,data=EVIDENCE;
+  arr[k]=i;const ok=i===data[k].a;ok?right($("#"+key)):wrong();save();render();if(!ok)shake($("#"+key));
+}
+
+document.addEventListener("click",e=>{
+  const g=e.target.closest("[data-go]");if(g&&!g.disabled){go(+g.dataset.go);return}
+  if(e.target.closest("#soundBtn")){SOUND=!SOUND;try{localStorage.setItem("ys-sound",SOUND?"1":"0")}catch(_){}header();sfx.tick();return}
+  const tf=e.target.closest("[data-tf]");if(tf){const[i,v]=tf.dataset.tf.split(":");const ans=v==="1";S.tf[i]=ans;const ok=ans===TF[i][1];ok?right($("#tf"+i)):wrong();save();render();if(!ok)shake($("#tf"+i));return}
+  const mt=e.target.closest("[data-match]");if(mt){const[i,k]=mt.dataset.match.split(":");S.match[i]=k;const ok=k===MATCH[i].a;ok?right($("#mt"+i)):wrong();save();render();if(!ok)shake($("#mt"+i));return}
+  const spot=e.target.closest("[data-spot]");if(spot){const i=+spot.dataset.spot;if(!S.found[i]){S.found[i]=true;if(S.hintSpot===i)S.hintSpot=null;sfx.find();burst(30,e.clientX,e.clientY);save();render();
+      say(`عثرتم على الدليل ${i+1}: ${EVIDENCE[i].t}`);setTimeout(()=>{const c=$("#ev"+i);c&&c.scrollIntoView({behavior:reduced?"auto":"smooth",block:"center"})},250)}return}
+  const dec=e.target.closest("[data-decoy]");if(dec){say(DECOYS[dec.dataset.decoy]);sfx.tick();return}
+  if(e.target.closest(".hunt svg")){say("لا شيء هنا… دققوا أكثر.");return}
+  const q=e.target.closest("[data-q]");if(q){const[key,i]=q.dataset.q.split(":");answerQ(key,+i);return}
+  const hn=e.target.closest("[data-hint]");if(hn&&!hn.disabled&&S.hints>0){const key=hn.dataset.hint;
+    if(key==="spot"){const i=S.found.findIndex(x=>!x);if(i>=0){S.hintSpot=i;S.hints--;save();render();say("رسم الحارس دائرة حول المكان. اضغطوا داخلها.")}}
+    else{const k=+key.slice(2),d=EVIDENCE[k];const wr=d.o.map((_,i)=>i).filter(i=>i!==d.a);S.hinted[key]=wr[Math.floor(Math.random()*wr.length)];S.hints--;save();render()}
+    sfx.tick();return}
+  const pb=e.target.closest("[data-play]");if(pb){const v=pb.parentElement.querySelector("video");pb.hidden=true;playVid(v);return}
+  const su=e.target.closest("[data-sus]");if(su){openSus(su.dataset.sus);return}
+  const vd=e.target.closest("[data-verd]");if(vd){const[id,k]=vd.dataset.verd.split(":");S.v[id]=k;save();sfx.good();$("#dlg").close();render();return}
+  if(e.target.closest("#dlgX")){$("#dlg").close();return}
+  const fi=e.target.closest("[data-final]");if(fi){S.final=fi.dataset.final;save();sfx.tick();render();return}
+  if(e.target.closest("#revealBtn")){reveal();return}
+  if(e.target.closest("[data-arena]")){showArena();return}
+  if(e.target.closest("[data-arena-back]")){hideArena();return}
+  const bd=e.target.closest("[data-bdel]");if(bd){BOARD.splice(+bd.dataset.bdel,1);saveBoard();refreshBoard();return}
+  if(e.target.closest("[data-bmine]")){BOARD.push({name:S.team||"فريق التحقيق",score:points().total});saveBoard();refreshBoard();sfx.good();const b=e.target.closest("[data-bmine]");b.disabled=true;b.textContent="أُضيفت نتيجتكم";return}
+  if(e.target.closest("#reset")){$("#resetConfirm").hidden=false;return}
+  if(e.target.closest("#resetYes")){S=clone(DEFAULT);save();render();return}
+});
+document.addEventListener("keydown",e=>{const sp=e.target.closest&&e.target.closest("[data-spot]");if(sp&&(e.key==="Enter"||e.key===" ")){e.preventDefault();sp.dispatchEvent(new MouseEvent("click",{bubbles:true,clientX:innerWidth/2,clientY:innerHeight/2}))}});
+$("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")e.target.close()});
+/* ================= team registration + live board (Supabase REST, no login) ================= */
+const CFG=window.YS_CONFIG||{};
+const ONLINE=!!(CFG.url&&CFG.key&&!/PASTE/.test(CFG.url+CFG.key));
+async function rpc(fn,body){
+  const r=await fetch(CFG.url.replace(/\/$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:Object.assign({apikey:CFG.key,"Content-Type":"application/json"},/^eyJ/.test(CFG.key)?{Authorization:"Bearer "+CFG.key}:{}),body:JSON.stringify(body||{})});
+  if(!r.ok)throw new Error(r.status+" "+(await r.text()).slice(0,200));
+  const t=await r.text();return t?JSON.parse(t):null;
+}
+function teamPayload(){const p=points();const fin=S.maxStep>=REVEAL;return {p_id:S.teamId,p_secret:S.teamSecret,p_score:fin?p.total:p.live,p_step:S.maxStep,p_finished:fin,p_choice:fin?(S.final||null):null}}
+let syncTimer=null,syncing=false,syncAgain=false;
+async function registerTeam(){
+  if(!ONLINE||S.teamId||!S.team)return;
+  try{const r=await rpc("register_team",{p_name:S.team});const row=Array.isArray(r)?r[0]:r;S.teamId=row.id;S.teamSecret=row.secret;save()}
+  catch(e){console.warn("register failed",e)}
+}
+async function syncNow(){
+  if(!ONLINE)return;
+  if(!S.teamId){await registerTeam();if(!S.teamId)return}
+  if(syncing){syncAgain=true;return}
+  syncing=true;
+  try{await rpc("update_team",teamPayload())}catch(e){console.warn("sync failed",e)}
+  syncing=false;if(syncAgain){syncAgain=false;syncNow()}
+}
+function queueSync(){if(!ONLINE||!S.team)return;clearTimeout(syncTimer);syncTimer=setTimeout(syncNow,700)}
+
+/* board view */
+let bMode="live",bRows=[],bTimer=null,bRevealed=0,bRange="today";
+const STEP_LABEL=i=>i>=REVEAL?"أنهى القضية":("في مرحلة: "+(STEPS[i]||STEPS[0]));
+function sinceISO(){const d=new Date();if(bRange==="all")return "2000-01-01T00:00:00Z";if(bRange==="hour")return new Date(Date.now()-3*3600e3).toISOString();d.setHours(0,0,0,0);return d.toISOString()}
+function rankedRows(rows){const t=[...rows].sort((a,b)=>b.score-a.score||(b.finished-a.finished)||String(a.updated_at).localeCompare(String(b.updated_at)));let last=null,pos=0;return t.map((x,i)=>{if(x.score!==last){pos=i+1;last=x.score}return {...x,pos}})}
+async function loadBoard(){
+  if(!ONLINE){$("#bStatus").textContent="غير متصل بقاعدة البيانات";bRows=S.team?[{id:"me",name:S.team,score:points()[S.maxStep>=REVEAL?"total":"live"],step:S.maxStep,finished:S.maxStep>=REVEAL}]:[];renderBoard();return}
+  try{const r=await rpc("get_board",{p_since:sinceISO()});bRows=(r||[]).map(x=>({...x,score:+x.score||0,step:+x.step||0}));$("#bStatus").textContent="مباشر · "+bRows.length+" فرق";}
+  catch(e){$("#bStatus").textContent="تعذّر التحديث، نحاول مجددًا…"}
+  if(bMode==="live"||bRevealed===0)renderBoard();
+}
+function renderBoard(){
+  document.querySelectorAll("[data-bmode]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.bmode===bMode)));
+  $("#bLive").hidden=bMode!=="live";$("#bShow").hidden=bMode!=="show";
+  if(bMode==="live"){
+    const r=rankedRows(bRows);
+    $("#bList").innerHTML=r.length?r.map(t=>`<div class="lrow ${t.id===S.teamId?"me":""} ${t.pos===1&&t.score>0?"lead":""}"><span class="lp">${t.pos}</span><span class="ln"><b>${esc(t.name)}${t.id===S.teamId?" <small>(فريقكم)</small>":""}</b><small>${t.finished?"أنهى القضية · "+rankOf(t.score):STEP_LABEL(t.step)}</small></span><span class="ls">${t.score}</span><span class="meter"><i style="width:${Math.max(0,Math.min(100,t.score))}%"></i></span></div>`).join(""):`<div class="empty"><b>لا توجد فرق بعد</b><span>كل فريق يكتب اسمه في أول صفحة ويضغط «ابدأوا التحقيق»، فيظهر هنا تلقائيًا.</span></div>`;
+  }else renderShow();
+}
+const rankOf=s=>RANKS.find(r=>s>=r[0])[1];
+function showRows(){return rankedRows(bRows.filter(t=>t.finished))}
+function renderShow(){
+  const r=showRows(),n=r.length,waiting=bRows.length-n;
+  $("#bShowNote").textContent=n?(waiting>0?`${n} فرق أنهت القضية · ${waiting} ما زالت تلعب`:`${n} فرق أنهت القضية`):"لم تُنهِ أي فرقة القضية بعد";
+  const shown=i=>i>=n-bRevealed,cls=["p1","p2","p3"];
+  $("#bPodium").innerHTML=n?r.slice(0,3).map((t,i)=>{const on=shown(i);return `<div class="pod ${cls[i]} ${on?"on":""}">${i===0?`<svg class="crown" aria-hidden="true"><use href="#crown"/></svg>`:""}<span class="nm ${on?"":"hidden-name"}">${on?esc(t.name):"؟؟؟"}</span><span class="sc" data-score="${t.score}">${on?t.score:"–"}</span><span class="rk">${on?rankOf(t.score):"&nbsp;"}</span><div class="block">${t.pos}</div></div>`}).join(""):"";
+  $("#bRest").innerHTML=r.slice(3).map((t,k)=>{const on=shown(k+3);return `<div class="rrow ${on?"on":""}"><span class="n">${t.pos}</span><span class="nm ${on?"":"hidden-name"}">${on?esc(t.name):"؟؟؟؟؟"}</span><span class="sc">${on?t.score:"–"}</span><span class="meter"><i style="width:${on?t.score:0}%"></i></span></div>`}).join("");
+  $("#bReveal").hidden=bRevealed>0&&bRevealed<n;$("#bNext").hidden=!(bRevealed>0&&bRevealed<n);
+  $("#bReveal").textContent=bRevealed>=n&&n?"أعد الكشف":"ابدأ الكشف";$("#bReveal").disabled=!n;$("#bAll").disabled=!n||bRevealed>=n;
+}
+function bCountUp(el){const tgt=+el.dataset.score;if(reduced||!tgt){el.textContent=tgt;return}const st=performance.now();(function f(t){const v=Math.round(tgt*Math.min(1,(t-st)/900));el.textContent=v;if(v<tgt)requestAnimationFrame(f)})(st)}
+function bNext(){
+  const n=showRows().length;if(bRevealed>=n)return;
+  const step=()=>{bRevealed++;renderShow();const idx=n-bRevealed;const el=idx<3?document.querySelectorAll("#bPodium .pod .sc")[idx]:null;if(el)bCountUp(el);
+    if(bRevealed===n){tone([523,659,784,1046,784,1046,1318],"triangle",.13,.3,.16);burst(180);setTimeout(()=>burst(110,innerWidth*.2,innerHeight*.35),380);setTimeout(()=>burst(110,innerWidth*.8,innerHeight*.35),700)}
+    else if(idx<3){sfx.good();const p=document.querySelectorAll("#bPodium .pod")[idx];if(p){const rc=p.getBoundingClientRect();burst(40,rc.left+rc.width/2,rc.top)}}else sfx.tick()};
+  if(bRevealed===n-1&&n>1){const ov=$("#bCount"),nEl=$("#bCountN");ov.hidden=false;let c=3;nEl.textContent=c;const drum=()=>tone([110,110,110,110,110,110],"square",.06,.05,.05);drum();
+    const iv=setInterval(()=>{c--;if(c>0){nEl.textContent=c;drum()}else{clearInterval(iv);ov.hidden=true;step()}},850)}else step();
+}
+function showArena(){$("#app").hidden=true;$(".top").hidden=true;$("#arena").hidden=false;window.scrollTo(0,0);bRevealed=0;loadBoard();clearInterval(bTimer);bTimer=setInterval(loadBoard,5000)}
+function hideArena(){clearInterval(bTimer);$("#arena").hidden=true;$("#app").hidden=false;$(".top").hidden=false;window.scrollTo(0,0)}
+document.addEventListener("click",e=>{
+  const m=e.target.closest("[data-bmode]");if(m){bMode=m.dataset.bmode;bRevealed=0;renderBoard();return}
+  if(e.target.closest("#bReveal")){if(bRevealed>=showRows().length)bRevealed=0;renderShow();bNext();return}
+  if(e.target.closest("#bNext")){bNext();return}
+  if(e.target.closest("#bAll")){const n=showRows().length;if(bRevealed<n-1){bRevealed=n-1;renderShow()}bNext();return}
+  if(e.target.closest("#bFs")){try{const el=document.documentElement;if(document.fullscreenElement)document.exitFullscreen();else{const p=el.requestFullscreen&&el.requestFullscreen();if(p)p.catch(()=>{})}}catch(_){}return}
+});
+document.addEventListener("change",e=>{if(e.target.id==="bRange"){bRange=e.target.value;bRevealed=0;loadBoard()}});
+document.addEventListener("keydown",e=>{if($("#arena").hidden||bMode!=="show")return;if((e.key===" "||e.key==="ArrowLeft")&&e.target===document.body){e.preventDefault();bNext()}});
+
+render();
+if(S.teamId)queueSync();
+if(location.hash==="#board")showArena();
+</script>
+
+
+</body>
+</html>

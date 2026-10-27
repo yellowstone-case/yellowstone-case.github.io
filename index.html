@@ -995,10 +995,12 @@ async function rpc(fn,body){
 }
 function teamPayload(){const p=points();const fin=S.maxStep>=REVEAL;return {p_id:S.teamId,p_secret:S.teamSecret,p_score:fin?p.total:p.live,p_step:S.maxStep,p_finished:fin,p_choice:fin?(S.final||null):null}}
 let syncTimer=null,syncing=false,syncAgain=false;
-async function registerTeam(){
-  if(!ONLINE||S.teamId||!S.team)return;
-  try{const r=await rpc("register_team",{p_name:S.team});const row=Array.isArray(r)?r[0]:r;S.teamId=row.id;S.teamSecret=row.secret;save()}
-  catch(e){console.warn("register failed",e)}
+let regP=null;
+function registerTeam(){
+  if(!ONLINE||S.teamId||!S.team)return Promise.resolve();
+  if(regP)return regP;
+  regP=(async()=>{try{const r=await rpc("register_team",{p_name:S.team});const row=Array.isArray(r)?r[0]:r;S.teamId=row.id;S.teamSecret=row.secret;save()}catch(e){console.warn("register failed",e)}finally{regP=null}})();
+  return regP;
 }
 async function syncNow(){
   if(!ONLINE)return;
